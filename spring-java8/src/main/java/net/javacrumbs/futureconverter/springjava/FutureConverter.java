@@ -32,6 +32,29 @@ public class FutureConverter {
         return new ListenableCompletableFutureWrapper<>(completableFuture);
     }
 
+    public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
+        CompletableFuture<T> completable = new CompletableFuture<T>() {
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+                boolean result = listenableFuture.cancel(mayInterruptIfRunning);
+                super.cancel(mayInterruptIfRunning);
+                return result;
+            }
+        };
+        listenableFuture.addCallback(new ListenableFutureCallback<T>() {
+            @Override
+            public void onSuccess(T result) {
+                completable.complete(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                completable.completeExceptionally(t);
+            }
+        });
+        return completable;
+    }
+
     private static class ListenableCompletableFutureWrapper<T> implements ListenableFuture<T> {
         private final CompletableFuture<T> wrapped;
         private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();

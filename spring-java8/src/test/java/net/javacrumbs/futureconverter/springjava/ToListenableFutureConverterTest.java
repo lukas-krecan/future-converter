@@ -33,7 +33,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class FutureConverterTest {
+public class ToListenableFutureConverterTest {
 
     public static final String VALUE = "test";
     public final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
@@ -51,14 +51,20 @@ public class FutureConverterTest {
 
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
+        CountDownLatch waitLatch = new CountDownLatch(1);
         CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
-            sleep(50);
+            try {
+                waitLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             return VALUE;
         });
         ListenableFuture<String> listenable = toListenableFuture(completable);
         listenable.addCallback(callback);
         assertEquals(false, listenable.isDone());
         assertEquals(false, listenable.isCancelled());
+        waitLatch.countDown();
 
         //wait for the result
         assertEquals(VALUE, listenable.get());
@@ -83,9 +89,14 @@ public class FutureConverterTest {
     }
 
     @Test
-    public void testCancel() throws ExecutionException, InterruptedException {
+    public void testCancelOriginal() throws ExecutionException, InterruptedException {
+        CountDownLatch waitLatch = new CountDownLatch(1);
         CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
-            sleep(100);
+            try {
+                waitLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             return "Hi";
         });
         completable.cancel(true);
@@ -100,6 +111,34 @@ public class FutureConverterTest {
         }
         assertEquals(true, listenable.isDone());
         assertEquals(true, listenable.isCancelled());
+        listenable.addCallback(callback);
+        verify(callback).onFailure(any(RuntimeException.class));
+    }
+
+    @Test
+    public void testCancelNew() throws ExecutionException, InterruptedException {
+        CountDownLatch waitLatch = new CountDownLatch(1);
+        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
+            try {
+                waitLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return "Hi";
+        });
+        ListenableFuture<String> listenable = toListenableFuture(completable);
+        listenable.cancel(true);
+
+        try {
+            listenable.get();
+            fail("Exception expected");
+        } catch (CancellationException e) {
+            //ok
+        }
+        assertEquals(true, listenable.isDone());
+        assertEquals(true, listenable.isCancelled());
+        assertEquals(true, completable.isDone());
+        assertEquals(true, completable.isCancelled());
         listenable.addCallback(callback);
         verify(callback).onFailure(any(RuntimeException.class));
     }
@@ -133,13 +172,4 @@ public class FutureConverterTest {
         listenable.addCallback(callback);
         verify(callback).onFailure(exception);
     }
-
-    private void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }
