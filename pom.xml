@@ -11,6 +11,7 @@
 
     <modules>
         <module>spring-java8</module>
+        <module>rxjava-java8</module>
     </modules>
 
 
