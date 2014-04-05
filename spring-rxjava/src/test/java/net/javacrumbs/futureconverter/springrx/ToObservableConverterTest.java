@@ -30,7 +30,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static net.javacrumbs.futureconverter.springrx.FutureConverter.toListenableFuture;
 import static net.javacrumbs.futureconverter.springrx.FutureConverter.toObservable;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -73,16 +75,13 @@ public class ToObservableConverterTest {
         verifyZeroInteractions(onError);
         verify(onComplete).call();
 
+        assertSame(listenable, toListenableFuture(observable));
     }
 
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
 
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            waitLatch.await();
-            return VALUE;
-        });
-        executorService.execute(listenable);
+        ListenableFutureTask<String> listenable = createAsyncListenableFuture();
 
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
@@ -106,14 +105,19 @@ public class ToObservableConverterTest {
         verify(onComplete).call();
     }
 
-
-    @Test
-    public void testCancelOriginal() throws ExecutionException, InterruptedException {
+    private ListenableFutureTask<String> createAsyncListenableFuture() throws InterruptedException {
         ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
             waitLatch.await();
             return VALUE;
         });
         executorService.execute(listenable);
+        return listenable;
+    }
+
+
+    @Test
+    public void testCancelOriginal() throws ExecutionException, InterruptedException {
+        ListenableFutureTask<String> listenable = createAsyncListenableFuture();
 
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
@@ -140,11 +144,7 @@ public class ToObservableConverterTest {
 
     @Test
     public void testUnsubscribe() throws ExecutionException, InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            waitLatch.await();
-            return VALUE;
-        });
-        executorService.execute(listenable);
+        ListenableFutureTask<String> listenable = createAsyncListenableFuture();
 
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
