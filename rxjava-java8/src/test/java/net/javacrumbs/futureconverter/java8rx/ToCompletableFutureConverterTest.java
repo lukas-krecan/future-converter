@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.rxjavajava8;
+package net.javacrumbs.futureconverter.java8rx;
 
 import org.junit.Test;
 import rx.Observable;
@@ -23,11 +23,9 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-import static net.javacrumbs.futureconverter.rxjavajava8.FutureConverter.toCompletableFuture;
+import static net.javacrumbs.futureconverter.java8rx.FutureConverter.toCompletableFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -39,7 +37,7 @@ public class ToCompletableFutureConverterTest {
     public static final String VALUE = "test";
 
     @Test
-    public void testConvertToListenableCompleted() throws ExecutionException, InterruptedException {
+    public void testConvertToCompletableCompleted() throws ExecutionException, InterruptedException {
         Observable<String> observable = Observable.from(VALUE);
         CompletableFuture<String> completable = toCompletableFuture(observable);
         Consumer<String> consumer = mock(Consumer.class);
@@ -110,8 +108,8 @@ public class ToCompletableFutureConverterTest {
         }
         assertEquals(true, completable.isDone());
         assertEquals(true, completable.isCancelled());
-        assertEquals(true, observable.);
-        assertEquals(true, observable.isCancelled());
+//        assertEquals(true, observable.);
+//        assertEquals(true, observable.isCancelled());
     }
 //
 //    @Test

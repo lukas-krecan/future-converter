@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.javacrumbs.future-converter</groupId>
-    <artifactId>spring-java8</artifactId>
+    <artifactId>spring-rxjava</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <parent>
@@ -19,6 +19,10 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.netflix.rxjava</groupId>
+            <artifactId>rxjava-core</artifactId>
         </dependency>
     </dependencies>
 

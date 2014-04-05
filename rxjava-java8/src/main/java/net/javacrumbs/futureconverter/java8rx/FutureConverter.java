@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.rxjavajava8;
+package net.javacrumbs.futureconverter.java8rx;
 
 import rx.Observable;
-import rx.util.functions.Action1;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -24,7 +23,7 @@ public class FutureConverter {
 
     public static <T> CompletableFuture<T> toCompletableFuture(Observable<T> observable) {
         CompletableFuture<T> completable = new CompletableFuture<T>();
-        observable.takeFirst().subscribe(
+        observable.take(1).subscribe(
                 completable::complete,
                 completable::completeExceptionally
         );

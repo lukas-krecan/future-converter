@@ -105,7 +105,7 @@ public class ToCompletableFutureConverterTest {
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
-        assertTrue(completable.cancel(true));
+        assertTrue(listenable.cancel(true));
 
         try {
             completable.get();
