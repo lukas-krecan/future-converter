@@ -16,18 +16,25 @@
 package net.javacrumbs.futureconverter.java8rx;
 
 import rx.Observable;
+import rx.Subscription;
 
 import java.util.concurrent.CompletableFuture;
 
 public class FutureConverter {
-
     public static <T> CompletableFuture<T> toCompletableFuture(Observable<T> observable) {
-        CompletableFuture<T> completable = new CompletableFuture<T>();
-        observable.take(1).subscribe(
-                completable::complete,
-                completable::completeExceptionally
-        );
-        return completable;
+        if (observable instanceof CompletableFutureObservable) {
+            return ((CompletableFutureObservable) observable).getCompletableFuture();
+        } else {
+            return new ObservableCompletableFuture<T>(observable);
+        }
+    }
+
+    public static <T> Observable<T> toObservable(CompletableFuture<T> completableFuture) {
+        if (completableFuture instanceof ObservableCompletableFuture) {
+            return ((ObservableCompletableFuture) completableFuture).getObservable();
+        } else {
+            return new CompletableFutureObservable<>(completableFuture);
+        }
     }
 }
 

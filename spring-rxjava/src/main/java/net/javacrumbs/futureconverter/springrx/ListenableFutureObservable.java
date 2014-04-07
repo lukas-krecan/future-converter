@@ -29,7 +29,7 @@ import rx.subscriptions.Subscriptions;
 class ListenableFutureObservable<T> extends Observable<T> {
     private final ListenableFuture<T> listenableFuture;
 
-    protected ListenableFutureObservable(ListenableFuture<T> listenableFuture) {
+    ListenableFutureObservable(ListenableFuture<T> listenableFuture) {
         super(onSubscribe(listenableFuture));
         this.listenableFuture = listenableFuture;
     }
@@ -54,10 +54,6 @@ class ListenableFutureObservable<T> extends Observable<T> {
                 subscriber.add(Subscriptions.from(listenableFuture));
             }
         };
-    }
-
-    public static <T> ListenableFutureObservable<T> create(ListenableFuture<T> listenableFuture) {
-        return new ListenableFutureObservable<>(listenableFuture);
     }
 
     public ListenableFuture<T> getListenableFuture() {

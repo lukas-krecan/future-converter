@@ -22,12 +22,6 @@
             <groupId>com.netflix.rxjava</groupId>
             <artifactId>rxjava-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>14.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

@@ -37,6 +37,7 @@ public class ToListenableFutureConverterTest {
 
     public static final String VALUE = "test";
     public final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
+    private final CountDownLatch waitLatch = new CountDownLatch(1);
 
     @Test
     public void testConvertToListenableCompleted() throws ExecutionException, InterruptedException {
@@ -51,15 +52,7 @@ public class ToListenableFutureConverterTest {
 
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
-        CountDownLatch waitLatch = new CountDownLatch(1);
-        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
-            try {
-                waitLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return VALUE;
-        });
+        CompletableFuture<String> completable = createRunningFuture();
         ListenableFuture<String> listenable = toListenableFuture(completable);
         listenable.addCallback(callback);
         assertEquals(false, listenable.isDone());
@@ -90,15 +83,7 @@ public class ToListenableFutureConverterTest {
 
     @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
-        CountDownLatch waitLatch = new CountDownLatch(1);
-        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
-            try {
-                waitLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return "Hi";
-        });
+        CompletableFuture<String> completable = createRunningFuture();
         completable.cancel(true);
 
         ListenableFuture<String> listenable = toListenableFuture(completable);
@@ -115,17 +100,20 @@ public class ToListenableFutureConverterTest {
         verify(callback).onFailure(any(RuntimeException.class));
     }
 
-    @Test
-    public void testCancelNew() throws ExecutionException, InterruptedException {
-        CountDownLatch waitLatch = new CountDownLatch(1);
-        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
+    private CompletableFuture<String> createRunningFuture() {
+        return CompletableFuture.supplyAsync(() -> {
             try {
                 waitLatch.await();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            return "Hi";
+            return VALUE;
         });
+    }
+
+    @Test
+    public void testCancelNew() throws ExecutionException, InterruptedException {
+        CompletableFuture<String> completable = createRunningFuture();
         ListenableFuture<String> listenable = toListenableFuture(completable);
         listenable.cancel(true);
 

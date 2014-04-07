@@ -36,7 +36,7 @@ public class FutureConverter {
      * @return
      */
     public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
-        return ListenableFutureObservable.create(listenableFuture);
+        return new ListenableFutureObservable<>(listenableFuture);
     }
 
     /**

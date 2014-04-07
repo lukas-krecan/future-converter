@@ -15,7 +15,6 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
-import com.google.common.util.concurrent.ForwardingExecutorService;
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.util.concurrent.ListenableFuture;
@@ -32,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static net.javacrumbs.futureconverter.springrx.FutureConverter.toListenableFuture;
 import static org.junit.Assert.assertEquals;
@@ -50,23 +50,10 @@ public class ToListenableFutureConverterTest {
 
     private final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
 
-    private final ExecutorService wrappedExecutorService = Executors.newSingleThreadExecutor();
+    private AtomicReference<Future<?>> futureTaskRef = new AtomicReference<>();
 
-    private Future<?> futureTask;
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-    private final ExecutorService executorService = new ForwardingExecutorService() {
-        @Override
-        protected ExecutorService delegate() {
-            return wrappedExecutorService;
-        }
-
-        @Override
-        public Future<?> submit(Runnable task) {
-            Future<?> future = super.submit(task);
-            futureTask = future;
-            return future;
-        }
-    };
     private AtomicInteger subscribed = new AtomicInteger(0);
 
     @After
@@ -111,7 +98,7 @@ public class ToListenableFutureConverterTest {
         listenable.addCallback(callback);
 
 
-        futureTask.cancel(true);
+        getFutureTask().cancel(true);
 
         try {
             listenable.get();
@@ -131,14 +118,13 @@ public class ToListenableFutureConverterTest {
         listenable.cancel(true);
 
         try {
-            futureTask.get();
+            getFutureTask().get();
         } catch (CancellationException e) {
             //ok
         }
-        assertTrue(futureTask.isCancelled());
+        assertTrue(getFutureTask().isCancelled());
         assertTrue(listenable.isCancelled());
     }
-
 
     @Test
     public void testConvertToCompletableException() throws ExecutionException, InterruptedException {
@@ -187,7 +173,12 @@ public class ToListenableFutureConverterTest {
                     }
                 });
                 subscriber.add(Subscriptions.from(future));
+                assertTrue(futureTaskRef.compareAndSet(null, future));
             }
         });
+    }
+
+    private Future<?> getFutureTask() {
+        return futureTaskRef.get();
     }
 }

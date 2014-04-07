@@ -43,6 +43,10 @@ public class ToCompletableFutureConverterTest {
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
+    private final CountDownLatch waitLatch = new CountDownLatch(1);
+
+    private final CountDownLatch latch = new CountDownLatch(1);
+
     @After
     public void shutdown() {
         executorService.shutdown();
@@ -56,7 +60,6 @@ public class ToCompletableFutureConverterTest {
         CompletableFuture<String> completable = toCompletableFuture(listenable);
         Consumer<String> consumer = mock(Consumer.class);
 
-        CountDownLatch latch = new CountDownLatch(1);
         completable.thenAccept(consumer).thenRun(() -> latch.countDown());
 
         assertEquals(VALUE, completable.get());
@@ -69,11 +72,7 @@ public class ToCompletableFutureConverterTest {
 
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
-        CountDownLatch waitLatch = new CountDownLatch(1);
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            waitLatch.await();
-            return VALUE;
-        });
+        ListenableFutureTask<String> listenable = createRunningTask();
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
@@ -81,7 +80,6 @@ public class ToCompletableFutureConverterTest {
         assertEquals(false, completable.isDone());
         assertEquals(false, completable.isCancelled());
 
-        CountDownLatch latch = new CountDownLatch(1);
         completable.thenAccept(consumer).thenRun(() -> latch.countDown());
         waitLatch.countDown();
 
@@ -97,11 +95,7 @@ public class ToCompletableFutureConverterTest {
 
     @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
-        CountDownLatch waitLatch = new CountDownLatch(1);
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            waitLatch.await();
-            return VALUE;
-        });
+        ListenableFutureTask<String> listenable = createRunningTask();
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
@@ -121,11 +115,7 @@ public class ToCompletableFutureConverterTest {
 
     @Test
     public void testCancelNew() throws ExecutionException, InterruptedException {
-        CountDownLatch waitLatch = new CountDownLatch(1);
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            waitLatch.await();
-            return VALUE;
-        });
+        ListenableFutureTask<String> listenable = createRunningTask();
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
@@ -143,6 +133,13 @@ public class ToCompletableFutureConverterTest {
         assertEquals(true, listenable.isCancelled());
     }
 
+    private ListenableFutureTask<String> createRunningTask() throws InterruptedException {
+        return new ListenableFutureTask<>(() -> {
+            waitLatch.await();
+            return VALUE;
+        });
+    }
+
     @Test
     public void testCancelCompleted() throws ExecutionException, InterruptedException {
         ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> VALUE);
@@ -151,7 +148,6 @@ public class ToCompletableFutureConverterTest {
         CompletableFuture<String> completable = toCompletableFuture(listenable);
         Consumer<String> consumer = mock(Consumer.class);
 
-        CountDownLatch latch = new CountDownLatch(1);
         completable.thenAccept(consumer).thenRun(() -> latch.countDown());
 
         assertEquals(VALUE, completable.get());
@@ -183,7 +179,7 @@ public class ToCompletableFutureConverterTest {
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
         Function<Throwable, ? extends String> fn = mock(Function.class);
-        CountDownLatch latch = new CountDownLatch(1);
+
         completable.exceptionally(fn).thenRun(() -> latch.countDown());
         try {
             completable.get();
