@@ -25,6 +25,7 @@ import rx.functions.Action0;
 import rx.functions.Action1;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -56,17 +57,25 @@ public class ToObservableConverterTest {
 
     @Test
     public void testConvertToObservableCompleted() throws ExecutionException, InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> VALUE);
+        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return VALUE;
+            }
+        });
         executorService.execute(listenable);
 
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
         Action1<Throwable> onError = mock(Action1.class);
-        Action0 onComplete = mock(Action0.class);
+        final Action0 onComplete = mock(Action0.class);
 
-        observable.subscribe(onNext, onError, () -> {
-            onComplete.call();
-            latch.countDown();
+        observable.subscribe(onNext, onError, new Action0() {
+            @Override
+            public void call() {
+                onComplete.call();
+                latch.countDown();
+            }
         });
 
         latch.await();
@@ -86,11 +95,14 @@ public class ToObservableConverterTest {
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
         Action1<Throwable> onError = mock(Action1.class);
-        Action0 onComplete = mock(Action0.class);
+        final Action0 onComplete = mock(Action0.class);
 
-        observable.subscribe(onNext, onError, () -> {
-            onComplete.call();
-            latch.countDown();
+        observable.subscribe(onNext, onError, new Action0() {
+            @Override
+            public void call() {
+                onComplete.call();
+                latch.countDown();
+            }
         });
         verifyZeroInteractions(onNext);
         verifyZeroInteractions(onError);
@@ -106,9 +118,12 @@ public class ToObservableConverterTest {
     }
 
     private ListenableFutureTask<String> createAsyncListenableFuture() throws InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            waitLatch.await();
-            return VALUE;
+        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                waitLatch.await();
+                return VALUE;
+            }
         });
         executorService.execute(listenable);
         return listenable;
@@ -121,17 +136,19 @@ public class ToObservableConverterTest {
 
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
+        final Action1<Throwable> onError = mock(Action1.class);
         Action0 onComplete = mock(Action0.class);
 
 
         observable.subscribe(
                 onNext,
-                t -> {
-                    onError.call(t);
-                    latch.countDown();
-                },
-                onComplete
+                new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable t) {
+                        onError.call(t);
+                        latch.countDown();
+                    }
+                }
         );
         listenable.cancel(true);
 
@@ -187,22 +204,28 @@ public class ToObservableConverterTest {
         doTestException(new IOException("test"));
     }
 
-    private void doTestException(Exception exception) throws InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            throw exception;
+    private void doTestException(final Exception exception) throws InterruptedException {
+        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                throw exception;
+            }
         });
         executorService.execute(listenable);
 
         Observable<String> observable = toObservable(listenable);
         Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
+        final Action1<Throwable> onError = mock(Action1.class);
         Action0 onComplete = mock(Action0.class);
 
         observable.subscribe(
                 onNext,
-                t -> {
-                    onError.call(t);
-                    latch.countDown();
+                new Action1<Throwable>() {
+                    @Override
+                    public void call(Throwable t) {
+                        onError.call(t);
+                        latch.countDown();
+                    }
                 },
                 onComplete
         );

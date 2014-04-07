@@ -34,10 +34,10 @@ class ListenableFutureObservable<T> extends Observable<T> {
         this.listenableFuture = listenableFuture;
     }
 
-    private static <T> OnSubscribe<T> onSubscribe(ListenableFuture<T> listenableFuture) {
+    private static <T> OnSubscribe<T> onSubscribe(final ListenableFuture<T> listenableFuture) {
         return new Observable.OnSubscribe<T>() {
             @Override
-            public void call(Subscriber<? super T> subscriber) {
+            public void call(final Subscriber<? super T> subscriber) {
                 listenableFuture.addCallback(new ListenableFutureCallback<T>() {
                     @Override
                     public void onSuccess(T t) {

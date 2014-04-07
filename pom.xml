@@ -13,6 +13,7 @@
         <module>spring-java8</module>
         <module>rxjava-java8</module>
         <module>spring-rxjava</module>
+        <module>common</module>
     </modules>
 
     <dependencies>
@@ -22,6 +23,7 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>

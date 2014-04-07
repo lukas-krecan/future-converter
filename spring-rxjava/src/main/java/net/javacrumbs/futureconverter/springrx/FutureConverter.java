@@ -19,8 +19,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
 import rx.Observable;
-import rx.Observer;
-import rx.Subscriber;
+import rx.functions.Action1;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -29,10 +28,23 @@ import java.util.concurrent.TimeoutException;
 
 public class FutureConverter {
 
+    /**
+     * Converts Observable to ListenableFuture.
+     *
+     * @param listenableFuture
+     * @param <T>
+     * @return
+     */
     public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
         return ListenableFutureObservable.create(listenableFuture);
     }
 
+    /**
+     * Converts observable to ListenableFuture. Warning: modifies the original observable.
+     * @param observable
+     * @param <T>
+     * @return
+     */
     public static <T> ListenableFuture<T> toListenableFuture(Observable<T> observable) {
         if (observable instanceof ListenableFutureObservable) {
             return ((ListenableFutureObservable) observable).getListenableFuture();
@@ -47,23 +59,21 @@ public class FutureConverter {
         private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
 
         private ListenableFutureObservableWrapper(Observable<T> wrapped) {
-            this.observable = wrapped;
-            this.futureFromObservable = wrapped.toBlockingObservable().toFuture();
-            wrapped.take(1).subscribe(new Subscriber<T>() {
-                @Override
-                public void onCompleted() {
-                }
-
-                @Override
-                public void onError(Throwable e) {
-                    callbackRegistry.failure(e);
-                }
-
-                @Override
-                public void onNext(T t) {
-                    callbackRegistry.success(t);
-                }
-            });
+            this.observable = wrapped.asObservable();
+            this.futureFromObservable = wrapped
+                    .doOnNext(new Action1<T>() {
+                        @Override
+                        public void call(T t) {
+                            callbackRegistry.success(t);
+                        }
+                    })
+                    .doOnError(new Action1<Throwable>() {
+                        @Override
+                        public void call(Throwable throwable) {
+                            callbackRegistry.failure(throwable);
+                        }
+                    })
+                    .toBlockingObservable().toFuture();
         }
 
         @Override

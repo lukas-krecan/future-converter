@@ -15,6 +15,7 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
+import net.javacrumbs.futureconverter.common.FutureWrapper;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
@@ -55,13 +56,11 @@ public class FutureConverter {
         return completable;
     }
 
-    private static class ListenableCompletableFutureWrapper<T> implements ListenableFuture<T> {
-        private final CompletableFuture<T> wrapped;
+    private static class ListenableCompletableFutureWrapper<T> extends FutureWrapper<T> implements ListenableFuture<T> {
         private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
 
         private ListenableCompletableFutureWrapper(CompletableFuture<T> wrapped) {
-            Objects.requireNonNull(wrapped, "Completable future has to be set");
-            this.wrapped = wrapped;
+            super(wrapped);
             wrapped.whenComplete((result, ex) -> {
                 if (ex != null) {
                     if (ex instanceof CompletionException && ex.getCause() != null) {
@@ -78,31 +77,6 @@ public class FutureConverter {
         @Override
         public void addCallback(ListenableFutureCallback<? super T> callback) {
             callbackRegistry.addCallback(callback);
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return wrapped.cancel(mayInterruptIfRunning);
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return wrapped.isCancelled();
-        }
-
-        @Override
-        public boolean isDone() {
-            return wrapped.isDone();
-        }
-
-        @Override
-        public T get() throws InterruptedException, ExecutionException {
-            return wrapped.get();
-        }
-
-        @Override
-        public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            return wrapped.get(timeout, unit);
         }
     }
 }
