@@ -17,6 +17,7 @@ package net.javacrumbs.futureconverter.java8rx;
 
 import org.junit.Test;
 import rx.Observable;
+import rx.Subscriber;
 import rx.subscriptions.Subscriptions;
 
 import java.util.concurrent.CancellationException;
@@ -77,17 +78,20 @@ public class ToCompletableFutureConverterTest {
     }
 
     private Observable<String> createWaitingTask(CountDownLatch waitLatch) {
-        return Observable.create(observer -> {
-            CompletableFuture<String> completableFuture = CompletableFuture.supplyAsync(() -> {
-                try {
-                    waitLatch.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                return VALUE;
-            });
-            completableFuture.thenAccept(observer::onNext);
-            return Subscriptions.from(completableFuture);
+        return Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                CompletableFuture<String> completableFuture = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        waitLatch.await();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return VALUE;
+                });
+                completableFuture.thenAccept(subscriber::onNext);
+                subscriber.add(Subscriptions.from(completableFuture));
+            }
         });
     }
 
