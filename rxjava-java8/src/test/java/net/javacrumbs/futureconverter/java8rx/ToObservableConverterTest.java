@@ -15,6 +15,8 @@
  */
 package net.javacrumbs.futureconverter.java8rx;
 
+import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import rx.Observable;
 import rx.Subscription;
@@ -25,6 +27,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static net.javacrumbs.futureconverter.java8rx.FutureConverter.toCompletableFuture;
 import static net.javacrumbs.futureconverter.java8rx.FutureConverter.toObservable;
@@ -42,6 +46,14 @@ public class ToObservableConverterTest {
     private final CountDownLatch latch = new CountDownLatch(1);
 
     private final CountDownLatch waitLatch = new CountDownLatch(1);
+
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    @After
+    public void cleanup() {
+        waitLatch.countDown();
+        executorService.shutdown();
+    }
 
     @Test
     public void testConvertToObservableCompleted() throws ExecutionException, InterruptedException {
@@ -92,19 +104,6 @@ public class ToObservableConverterTest {
         verifyZeroInteractions(onError);
         verify(onComplete).call();
     }
-
-    private CompletableFuture<String> createAsyncCompletable() throws InterruptedException {
-        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
-            try {
-                waitLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return VALUE;
-        });
-        return completable;
-    }
-
 
     @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
@@ -168,7 +167,7 @@ public class ToObservableConverterTest {
     private void doTestException(final RuntimeException exception) throws InterruptedException {
         CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
             throw exception;
-        });
+        }, executorService);
 
         Observable<String> observable = toObservable(completable);
         Action1<String> onNext = mock(Action1.class);
@@ -192,6 +191,18 @@ public class ToObservableConverterTest {
         verifyZeroInteractions(onNext);
         verify(onError).call(any(CompletionException.class));
         verifyZeroInteractions(onComplete);
+    }
+
+    private CompletableFuture<String> createAsyncCompletable() throws InterruptedException {
+        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
+            try {
+                waitLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return VALUE;
+        }, executorService);
+        return completable;
     }
 
 }
