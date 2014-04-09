@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static java.util.stream.Collectors.joining;
@@ -53,6 +54,7 @@ public class ToCompletableFutureConverterTest {
 
     private AtomicInteger subscribed = new AtomicInteger(0);
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private AtomicReference<Future> futureTaskRef = new AtomicReference<>();
 
     @After
     public void cleanup() {
@@ -68,7 +70,7 @@ public class ToCompletableFutureConverterTest {
         Consumer<String> consumer = mock(Consumer.class);
 
         CountDownLatch latch = new CountDownLatch(1);
-        completable.thenAccept(consumer).thenRun(() -> latch.countDown());
+        completable.thenAccept(consumer).thenRun(latch::countDown);
 
         assertEquals(VALUE, completable.get());
         assertEquals(true, completable.isDone());
@@ -89,7 +91,7 @@ public class ToCompletableFutureConverterTest {
         assertEquals(false, completable.isCancelled());
 
         CountDownLatch latch = new CountDownLatch(1);
-        completable.thenAccept(consumer).thenRun(() -> latch.countDown());
+        completable.thenAccept(consumer).thenRun(latch::countDown);
         waitLatch.countDown();
 
         //wait for the result
@@ -103,22 +105,39 @@ public class ToCompletableFutureConverterTest {
     }
 
     @Test
-    @Ignore
+    public void testCancelOriginal() throws ExecutionException, InterruptedException {
+        Observable<String> observable = createAsyncObservable();
+
+        CompletableFuture<String> completable = toCompletableFuture(observable);
+        futureTaskRef.get().cancel(true);
+
+        try {
+            completable.get();
+            fail("Exception expected");
+        } catch (ExecutionException e) {
+            //ok
+        }
+        assertEquals(true, completable.isDone());
+        assertEquals(false, completable.isCancelled());
+
+        assertEquals(1, subscribed.get());
+    }
+
+    @Test
     public void testUnsubscribe() throws ExecutionException, InterruptedException {
         Observable<String> observable = createAsyncObservable();
 
         CompletableFuture<String> completable = toCompletableFuture(observable);
-        //FIXME: Does not work if the observable does not start before unsubscribe.
         ((ObservableCompletableFuture) completable).getSubscription().unsubscribe();
 
         try {
             completable.get();
             fail("Exception expected");
         } catch (ExecutionException e) {
-            assertEquals(InterruptedException.class, e.getCause().getClass());
+            //ok
         }
         assertEquals(true, completable.isDone());
-        assertEquals(false, completable.isCancelled()); //causes an error
+        assertEquals(false, completable.isCancelled());
 
         assertEquals(1, subscribed.get());
     }
@@ -188,17 +207,16 @@ public class ToCompletableFutureConverterTest {
             subscribed.incrementAndGet();
             Future<?> future = executorService.submit(() -> {
                 try {
-                    System.out.println("Started");
                     waitLatch.await();
                     subscriber.onNext(VALUE);
                     subscriber.onCompleted();
                 } catch (InterruptedException e) {
-                    System.out.println("Interrupted");
                     subscriber.onError(e);
                     throw new RuntimeException(e);
                 }
             });
             subscriber.add(Subscriptions.from(future));
+            assertTrue(this.futureTaskRef.compareAndSet(null, future));
         });
     }
 }
