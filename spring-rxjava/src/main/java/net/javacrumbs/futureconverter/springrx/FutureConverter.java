@@ -16,15 +16,7 @@
 package net.javacrumbs.futureconverter.springrx;
 
 import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
 import rx.Observable;
-import rx.functions.Action1;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class FutureConverter {
 
@@ -36,11 +28,17 @@ public class FutureConverter {
      * @return
      */
     public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
-        return new ListenableFutureObservable<>(listenableFuture);
+        if (listenableFuture instanceof ObservableListenableFuture) {
+            return ((ObservableListenableFuture) listenableFuture).getObservable();
+        } else {
+            return new ListenableFutureObservable<>(listenableFuture);
+        }
+
     }
 
     /**
      * Converts observable to ListenableFuture. Warning: modifies the original observable.
+     *
      * @param observable
      * @param <T>
      * @return
@@ -49,65 +47,8 @@ public class FutureConverter {
         if (observable instanceof ListenableFutureObservable) {
             return ((ListenableFutureObservable) observable).getListenableFuture();
         } else {
-            return new ListenableFutureObservableWrapper(observable);
+            return new ObservableListenableFuture(observable);
         }
     }
 
-    private static class ListenableFutureObservableWrapper<T> implements ListenableFuture<T> {
-        private final Observable<T> observable;
-        private final Future<T> futureFromObservable;
-        private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
-
-        private ListenableFutureObservableWrapper(Observable<T> wrapped) {
-            this.observable = wrapped.asObservable();
-            this.futureFromObservable = wrapped
-                    .doOnNext(new Action1<T>() {
-                        @Override
-                        public void call(T t) {
-                            callbackRegistry.success(t);
-                        }
-                    })
-                    .doOnError(new Action1<Throwable>() {
-                        @Override
-                        public void call(Throwable throwable) {
-                            callbackRegistry.failure(throwable);
-                        }
-                    })
-                    .toBlockingObservable().toFuture();
-        }
-
-        @Override
-        public void addCallback(ListenableFutureCallback<? super T> callback) {
-            callbackRegistry.addCallback(callback);
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return futureFromObservable.cancel(mayInterruptIfRunning);
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return futureFromObservable.isCancelled();
-        }
-
-        @Override
-        public boolean isDone() {
-            return futureFromObservable.isDone();
-        }
-
-        @Override
-        public T get() throws InterruptedException, ExecutionException {
-            return futureFromObservable.get();
-        }
-
-        @Override
-        public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            return futureFromObservable.get(timeout, unit);
-        }
-
-        public Observable<T> getObservable() {
-            return observable;
-        }
-    }
 }

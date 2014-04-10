@@ -9,6 +9,21 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>9</version>
+    </parent>
+
+    <developers>
+        <developer>
+            <id>lukas</id>
+            <name>Lukas Krecan</name>
+            <email>lukas@krecan.net</email>
+        </developer>
+    </developers>
+
+
     <modules>
         <module>spring-java8</module>
         <module>rxjava-java8</module>
@@ -47,6 +62,51 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>LICENSE.txt</url>
+        </license>
+    </licenses>
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <configuration>
+                            <keyname>572516F4</keyname>
+                        </configuration>
+                        <version>1.0</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <scm>
+        <connection>scm:git:git@github.com:lukas-krecan/future-converter.git</connection>
+        <developerConnection>scm:git:git@github.com:lukas-krecan/future-converter.git</developerConnection>
+        <url>scm:git:git@github.com:lukas-krecan/future-converter.git</url>
+    </scm>
 
 
 </project>

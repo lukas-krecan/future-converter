@@ -34,7 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static net.javacrumbs.futureconverter.springrx.FutureConverter.toListenableFuture;
+import static net.javacrumbs.futureconverter.springrx.FutureConverter.toObservable;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -71,6 +73,8 @@ public class ToListenableFutureConverterTest {
         verify(callback).onSuccess(VALUE);
         assertEquals(VALUE, listenable.get());
         assertEquals(true, listenable.isDone());
+
+        assertNotNull(toObservable(listenable));
     }
 
     @Test
