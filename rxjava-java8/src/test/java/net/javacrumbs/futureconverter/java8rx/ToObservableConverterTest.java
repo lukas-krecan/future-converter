@@ -16,7 +16,6 @@
 package net.javacrumbs.futureconverter.java8rx;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import rx.Observable;
 import rx.Subscription;
@@ -60,8 +59,8 @@ public class ToObservableConverterTest {
         CompletableFuture<String> completable = CompletableFuture.completedFuture(VALUE);
 
         Observable<String> observable = toObservable(completable);
-        Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
+        Action1<String> onNext = mockAction();
+        Action1<Throwable> onError = mockAction();
         final Action0 onComplete = mock(Action0.class);
 
         observable.subscribe(onNext, onError, () -> {
@@ -84,8 +83,8 @@ public class ToObservableConverterTest {
         CompletableFuture<String> completable = createAsyncCompletable();
 
         Observable<String> observable = toObservable(completable);
-        Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
+        Action1<String> onNext = mockAction();
+        Action1<Throwable> onError = mockAction();
         final Action0 onComplete = mock(Action0.class);
 
         observable.subscribe(onNext, onError, () -> {
@@ -110,8 +109,8 @@ public class ToObservableConverterTest {
         CompletableFuture<String> completable = createAsyncCompletable();
 
         Observable<String> observable = toObservable(completable);
-        Action1<String> onNext = mock(Action1.class);
-        final Action1<Throwable> onError = mock(Action1.class);
+        Action1<String> onNext = mockAction();
+        final Action1<Throwable> onError = mockAction();
         Action0 onComplete = mock(Action0.class);
 
 
@@ -131,13 +130,18 @@ public class ToObservableConverterTest {
         verifyZeroInteractions(onComplete);
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> Action1<T> mockAction() {
+        return mock(Action1.class);
+    }
+
     @Test
     public void testUnsubscribe() throws ExecutionException, InterruptedException {
         CompletableFuture<String> completable = createAsyncCompletable();
 
         Observable<String> observable = toObservable(completable);
-        Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
+        Action1<String> onNext = mockAction();
+        Action1<Throwable> onError = mockAction();
         Action0 onComplete = mock(Action0.class);
 
         Subscription subscription = observable.subscribe(
@@ -170,8 +174,8 @@ public class ToObservableConverterTest {
         }, executorService);
 
         Observable<String> observable = toObservable(completable);
-        Action1<String> onNext = mock(Action1.class);
-        final Action1<Throwable> onError = mock(Action1.class);
+        Action1<String> onNext = mockAction();
+        final Action1<Throwable> onError = mockAction();
         Action0 onComplete = mock(Action0.class);
 
         observable.subscribe(
@@ -194,7 +198,7 @@ public class ToObservableConverterTest {
     }
 
     private CompletableFuture<String> createAsyncCompletable() throws InterruptedException {
-        CompletableFuture<String> completable = CompletableFuture.supplyAsync(() -> {
+        return CompletableFuture.supplyAsync(() -> {
             try {
                 waitLatch.await();
             } catch (InterruptedException e) {
@@ -202,7 +206,6 @@ public class ToObservableConverterTest {
             }
             return VALUE;
         }, executorService);
-        return completable;
     }
 
 }

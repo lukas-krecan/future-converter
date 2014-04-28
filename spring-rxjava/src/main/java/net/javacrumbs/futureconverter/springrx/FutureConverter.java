@@ -21,7 +21,7 @@ import rx.Observable;
 public class FutureConverter {
 
     /**
-     * Converts Observable to ListenableFuture.
+     * Converts {@link org.springframework.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
      *
      * @param listenableFuture
      * @param <T>
@@ -29,7 +29,7 @@ public class FutureConverter {
      */
     public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
         if (listenableFuture instanceof ObservableListenableFuture) {
-            return ((ObservableListenableFuture) listenableFuture).getObservable();
+            return ((ObservableListenableFuture<T>) listenableFuture).getObservable();
         } else {
             return new ListenableFutureObservable<>(listenableFuture);
         }
@@ -37,7 +37,8 @@ public class FutureConverter {
     }
 
     /**
-     * Converts observable to ListenableFuture. Warning: modifies the original observable.
+     * Converts  {@link rx.Observable} to {@link org.springframework.util.concurrent.ListenableFuture}.
+     * Modifies the original Observable and takes only the first value.
      *
      * @param observable
      * @param <T>
@@ -45,9 +46,9 @@ public class FutureConverter {
      */
     public static <T> ListenableFuture<T> toListenableFuture(Observable<T> observable) {
         if (observable instanceof ListenableFutureObservable) {
-            return ((ListenableFutureObservable) observable).getListenableFuture();
+            return ((ListenableFutureObservable<T>) observable).getListenableFuture();
         } else {
-            return new ObservableListenableFuture(observable);
+            return new ObservableListenableFuture<>(observable);
         }
     }
 

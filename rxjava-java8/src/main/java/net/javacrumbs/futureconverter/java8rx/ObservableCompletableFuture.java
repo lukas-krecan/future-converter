@@ -18,7 +18,6 @@ package net.javacrumbs.futureconverter.java8rx;
 import rx.Observable;
 import rx.Subscription;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

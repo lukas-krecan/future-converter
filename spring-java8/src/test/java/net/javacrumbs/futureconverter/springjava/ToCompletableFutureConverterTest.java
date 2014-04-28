@@ -19,7 +19,6 @@ import org.junit.After;
 import org.junit.Test;
 import org.springframework.util.concurrent.ListenableFutureTask;
 
-import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -58,9 +57,9 @@ public class ToCompletableFutureConverterTest {
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
-        Consumer<String> consumer = mock(Consumer.class);
+        Consumer<String> consumer = mockConsumer();
 
-        completable.thenAccept(consumer).thenRun(() -> latch.countDown());
+        completable.thenAccept(consumer).thenRun(latch::countDown);
 
         assertEquals(VALUE, completable.get());
         assertEquals(true, completable.isDone());
@@ -70,17 +69,22 @@ public class ToCompletableFutureConverterTest {
 
     }
 
+    @SuppressWarnings("unchecked")
+    private Consumer<String> mockConsumer() {
+        return mock(Consumer.class);
+    }
+
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
         ListenableFutureTask<String> listenable = createRunningTask();
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
-        Consumer<String> consumer = mock(Consumer.class);
+        Consumer<String> consumer = mockConsumer();
         assertEquals(false, completable.isDone());
         assertEquals(false, completable.isCancelled());
 
-        completable.thenAccept(consumer).thenRun(() -> latch.countDown());
+        completable.thenAccept(consumer).thenRun(latch::countDown);
         waitLatch.countDown();
 
         //wait for the result
@@ -146,9 +150,9 @@ public class ToCompletableFutureConverterTest {
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
-        Consumer<String> consumer = mock(Consumer.class);
+        Consumer<String> consumer = mockConsumer();
 
-        completable.thenAccept(consumer).thenRun(() -> latch.countDown());
+        completable.thenAccept(consumer).thenRun(latch::countDown);
 
         assertEquals(VALUE, completable.get());
         assertEquals(true, completable.isDone());
@@ -178,9 +182,9 @@ public class ToCompletableFutureConverterTest {
         executorService.execute(listenable);
 
         CompletableFuture<String> completable = toCompletableFuture(listenable);
-        Function<Throwable, ? extends String> fn = mock(Function.class);
+        Function<Throwable, ? extends String> fn = mockFunction();
 
-        completable.exceptionally(fn).thenRun(() -> latch.countDown());
+        completable.exceptionally(fn).thenRun(latch::countDown);
         try {
             completable.get();
             fail("Exception expected");
@@ -192,6 +196,11 @@ public class ToCompletableFutureConverterTest {
 
         latch.await();
         verify(fn).apply(exception);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Function<Throwable, ? extends String> mockFunction() {
+        return mock(Function.class);
     }
 
 }

@@ -15,25 +15,39 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
-import net.javacrumbs.futureconverter.common.FutureWrapper;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
+/**
+ * Converts between {@link java.util.concurrent.CompletableFuture} and Spring 4 {@link org.springframework.util.concurrent.ListenableFuture}.
+ */
 public class FutureConverter {
 
+    /**
+     * Converts {@link java.util.concurrent.CompletableFuture} to {@link org.springframework.util.concurrent.ListenableFuture}.
+     *
+     * @param completableFuture
+     * @param <T>
+     * @return
+     */
     public static <T> ListenableFuture<T> toListenableFuture(CompletableFuture<T> completableFuture) {
         return new ListenableCompletableFutureWrapper<>(completableFuture);
     }
 
+    /**
+     * Converts  {@link org.springframework.util.concurrent.ListenableFuture} to {@link java.util.concurrent.CompletableFuture}.
+     *
+     * @param listenableFuture
+     * @param <T>
+     * @return
+     */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
+        return buildCompletableFutureFromListenableFuture(listenableFuture);
+    }
+
+    private static <T> CompletableFuture<T> buildCompletableFutureFromListenableFuture(final ListenableFuture<T> listenableFuture) {
         CompletableFuture<T> completable = new CompletableFuture<T>() {
             @Override
             public boolean cancel(boolean mayInterruptIfRunning) {
@@ -56,27 +70,4 @@ public class FutureConverter {
         return completable;
     }
 
-    private static class ListenableCompletableFutureWrapper<T> extends FutureWrapper<T> implements ListenableFuture<T> {
-        private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
-
-        private ListenableCompletableFutureWrapper(CompletableFuture<T> wrapped) {
-            super(wrapped);
-            wrapped.whenComplete((result, ex) -> {
-                if (ex != null) {
-                    if (ex instanceof CompletionException && ex.getCause() != null) {
-                        callbackRegistry.failure(ex.getCause());
-                    } else {
-                        callbackRegistry.failure(ex);
-                    }
-                } else {
-                    callbackRegistry.success(result);
-                }
-            });
-        }
-
-        @Override
-        public void addCallback(ListenableFutureCallback<? super T> callback) {
-            callbackRegistry.addCallback(callback);
-        }
-    }
 }

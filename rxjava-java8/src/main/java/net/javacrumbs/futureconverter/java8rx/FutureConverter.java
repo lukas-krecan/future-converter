@@ -16,22 +16,40 @@
 package net.javacrumbs.futureconverter.java8rx;
 
 import rx.Observable;
-import rx.Subscription;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Converts between Java 8 {@link java.util.concurrent.CompletableFuture} and RxJava {@link rx.Observable}
+ */
 public class FutureConverter {
+
+    /**
+     * Converts {@link rx.Observable} to {@link java.util.concurrent.CompletableFuture}. Takes
+     * only the first value produced by observable.
+     *
+     * @param observable
+     * @param <T>
+     * @return
+     */
     public static <T> CompletableFuture<T> toCompletableFuture(Observable<T> observable) {
         if (observable instanceof CompletableFutureObservable) {
-            return ((CompletableFutureObservable) observable).getCompletableFuture();
+            return ((CompletableFutureObservable<T>) observable).getCompletableFuture();
         } else {
-            return new ObservableCompletableFuture<T>(observable);
+            return new ObservableCompletableFuture<>(observable);
         }
     }
 
+    /**
+     * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Observable}.
+     *
+     * @param completableFuture
+     * @param <T>
+     * @return
+     */
     public static <T> Observable<T> toObservable(CompletableFuture<T> completableFuture) {
         if (completableFuture instanceof ObservableCompletableFuture) {
-            return ((ObservableCompletableFuture) completableFuture).getObservable();
+            return ((ObservableCompletableFuture<T>) completableFuture).getObservable();
         } else {
             return new CompletableFutureObservable<>(completableFuture);
         }
