@@ -105,12 +105,13 @@ public class ToCompletableFutureConverterTest {
     }
 
     @Test
-    @Ignore //FIXME: should be passing
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
         Observable<String> observable = createAsyncObservable();
 
         CompletableFuture<String> completable = toCompletableFuture(observable);
+        System.out.println("Future cancel:" + futureTaskRef.get());
         futureTaskRef.get().cancel(true);
+        assertTrue(futureTaskRef.get().isCancelled());
 
         try {
             completable.get();
@@ -208,15 +209,18 @@ public class ToCompletableFutureConverterTest {
             subscribed.incrementAndGet();
             Future<?> future = executorService.submit(() -> {
                 try {
+                    System.out.println("wait");
                     waitLatch.await();
                     subscriber.onNext(VALUE);
                     subscriber.onCompleted();
                 } catch (InterruptedException e) {
+                    System.out.println("interrupted");
                     subscriber.onError(e);
                     throw new RuntimeException(e);
                 }
             });
             subscriber.add(Subscriptions.from(future));
+            System.out.println("Future created:" + future);
             assertTrue(this.futureTaskRef.compareAndSet(null, future));
         });
     }
