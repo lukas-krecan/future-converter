@@ -49,6 +49,7 @@ public class ToCompletableFutureConverterTest {
     public static final String VALUE = "test";
 
     private final CountDownLatch waitLatch = new CountDownLatch(1);
+    private final CountDownLatch taskStartedLatch = new CountDownLatch(1);
 
     private AtomicInteger subscribed = new AtomicInteger(0);
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -108,12 +109,13 @@ public class ToCompletableFutureConverterTest {
     }
 
     @Test
-    @Ignore
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
         Observable<String> observable = createAsyncObservable();
 
         CompletableFuture<String> completable = toCompletableFuture(observable);
         System.out.println("Future cancel:" + futureTaskRef.get());
+
+        taskStartedLatch.await(); //wait for the task to start
         futureTaskRef.get().cancel(true);
         assertTrue(futureTaskRef.get().isCancelled());
 
@@ -213,7 +215,7 @@ public class ToCompletableFutureConverterTest {
             subscribed.incrementAndGet();
             Future<?> future = executorService.submit(() -> {
                 try {
-                    System.out.println("wait");
+                    taskStartedLatch.countDown();
                     waitLatch.await();
                     subscriber.onNext(VALUE);
                     subscriber.onCompleted();
