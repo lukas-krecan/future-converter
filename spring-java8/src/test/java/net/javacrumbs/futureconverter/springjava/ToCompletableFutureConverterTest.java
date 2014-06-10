@@ -25,9 +25,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.Thread.sleep;
 import static net.javacrumbs.futureconverter.springjava.FutureConverter.toCompletableFuture;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -201,6 +203,33 @@ public class ToCompletableFutureConverterTest {
     @SuppressWarnings("unchecked")
     private Function<Throwable, ? extends String> mockFunction() {
         return mock(Function.class);
+    }
+
+
+    @Test
+    public void testPools() throws InterruptedException {
+        CountDownLatch waitLatch = new CountDownLatch(1);
+
+        //Future<?> future = CompletableFuture.runAsync(() -> {
+        Future<?> future = Executors.newWorkStealingPool(1).submit(() -> {
+            try {
+                System.out.println("Wait");
+                waitLatch.await(); //cancel should interrupt
+                System.out.println("Done");
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted");
+                throw new RuntimeException(e);
+            }
+        });
+
+        sleep(10); //give it some time to start (ugly, but works)
+        future.cancel(true);
+        System.out.println("Cancel called");
+
+        assertTrue(future.isCancelled());
+
+        assertTrue(future.isDone());
+        sleep(100); //give it some time to finish
     }
 
 }
