@@ -19,11 +19,11 @@ Converts between [RxJava](https://github.com/Netflix/RxJava) Observables and Spr
 
 Import the dependency
 
-    <parent>
+    <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>spring-rxjava</artifactId>
         <version>0.0.2</version>
-    </parent>
+    </dependency>
 
 And then use
 
