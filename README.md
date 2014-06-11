@@ -42,11 +42,11 @@ Converts between Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4
 
 Import the dependency
 
-    <parent>
+    <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>spring-java8</artifactId>
         <version>0.0.2</version>
-    </parent>
+    </dependency>
 
 And then use
 
@@ -62,11 +62,11 @@ Converts between [RxJava](https://github.com/Netflix/RxJava) Observables and Jav
 
 Import the dependency
 
-    <parent>
+    <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>rxjava-java8</artifactId>
         <version>0.0.2</version>
-    </parent>
+    </dependency>
 
 And then use
 
