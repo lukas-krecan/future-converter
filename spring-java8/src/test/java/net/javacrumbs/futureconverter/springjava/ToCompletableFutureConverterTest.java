@@ -139,6 +139,27 @@ public class ToCompletableFutureConverterTest {
         assertEquals(true, listenable.isCancelled());
     }
 
+    @Test
+    public void testCancelBeforeStart() throws ExecutionException, InterruptedException {
+        ListenableFutureTask<String> listenable = createRunningTask();
+        executorService.execute(listenable);
+        listenable.cancel(true);
+
+        CompletableFuture<String> completable = toCompletableFuture(listenable);
+        assertFalse(completable.cancel(true));
+
+        try {
+            completable.get();
+            fail("Exception expected");
+        } catch (CancellationException e) {
+            //ok
+        }
+        assertEquals(true, completable.isDone());
+        assertEquals(true, completable.isCancelled());
+        assertEquals(true, listenable.isDone());
+        assertEquals(true, listenable.isCancelled());
+    }
+
     private ListenableFutureTask<String> createRunningTask() throws InterruptedException {
         return new ListenableFutureTask<>(() -> {
             waitLatch.await();
