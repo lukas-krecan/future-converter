@@ -46,7 +46,7 @@ class ObservableListenableFuture<T> implements ListenableFuture<T> {
                         callbackRegistry.failure(throwable);
                     }
                 })
-                .toBlockingObservable().toFuture();
+                .toBlocking().toFuture();
     }
 
     @Override
