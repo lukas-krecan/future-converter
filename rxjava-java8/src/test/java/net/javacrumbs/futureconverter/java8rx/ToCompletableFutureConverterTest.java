@@ -16,7 +16,6 @@
 package net.javacrumbs.futureconverter.java8rx;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import rx.Observable;
 import rx.Subscriber;
@@ -64,7 +63,7 @@ public class ToCompletableFutureConverterTest {
 
     @Test
     public void testConvertToCompletableCompleted() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(VALUE);
+        Observable<String> observable = Observable.from(new String[]{VALUE});
         CompletableFuture<String> completable = toCompletableFuture(observable);
         Consumer<String> consumer = mockConsumer();
 
@@ -173,7 +172,7 @@ public class ToCompletableFutureConverterTest {
 
     @Test
     public void testCancelCompleted() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(VALUE);
+        Observable<String> observable = Observable.from(new String[]{VALUE});
 
         CompletableFuture<String> completable = toCompletableFuture(observable);
         assertFalse(completable.cancel(true));
@@ -197,9 +196,7 @@ public class ToCompletableFutureConverterTest {
 
 
     private void doTestException(final Exception exception) throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.create((Subscriber<? super String> subscriber) -> {
-            subscriber.onError(exception);
-        });
+        Observable<String> observable = Observable.create((Subscriber<? super String> subscriber) -> subscriber.onError(exception));
 
         CompletableFuture<String> completableFuture = toCompletableFuture(observable);
         try {
