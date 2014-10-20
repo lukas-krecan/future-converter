@@ -65,7 +65,7 @@ public class ToListenableFutureConverterTest {
 
     @Test
     public void testConvertToObservableCompleted() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(VALUE);
+        Observable<String> observable = Observable.from(new String[]{VALUE});
 
         ListenableFuture<String> listenable = toListenableFuture(observable);
         listenable.addCallback(callback);
