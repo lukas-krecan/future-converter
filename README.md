@@ -95,6 +95,8 @@ And then use
     import static net.javacrumbs.futureconverter.springguava.FutureConverter.*;
 
     ...
-    com.google.common.util.concurrent.ListenableFuture<String> guavaListenableFuture = toGuavaListenableFuture(springListenableFuture);
+    com.google.common.util.concurrent.ListenableFuture<String> guavaListenableFuture
+            = toGuavaListenableFuture(springListenableFuture);
     ...
-    org.springframework.util.concurrent.ListenableFuture<String> springListenableFuture = toSpringListenableFuture(guavaListenableFuture);
+    org.springframework.util.concurrent.ListenableFuture<String> springListenableFuture
+            = toSpringListenableFuture(guavaListenableFuture);
