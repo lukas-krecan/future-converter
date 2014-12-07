@@ -1,8 +1,10 @@
 Future Converter
 ================
 
-Converts between various future types, [RxJava](https://github.com/Netflix/RxJava) Observables, Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4.0.0.BUILD-SNAPSHOT/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html)
-and Java 8 [CompletableFuture](http://download.java.net/lambda/b88/docs/api/java/util/concurrent/CompletableFuture.html).
+Converts between various future types, [RxJava](https://github.com/Netflix/RxJava) Observables,
+Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4.0.0.BUILD-SNAPSHOT/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html),
+Java 8 [CompletableFuture](http://download.java.net/lambda/b88/docs/api/java/util/concurrent/CompletableFuture.html) and
+Guava [ListenableFuture](http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/util/concurrent/ListenableFuture.html).
 
 Please note that the conversion is not always straightforward. Especially RxObservables are completely different concept than
 Futures. Nevertheless, the conversion is more or less possible.
@@ -12,7 +14,7 @@ I am aware of the following quirks:
 * Observable can produce multiple values. When converting to Future, we take the first value
 * It is not [possible to cancel ObservableFuture](http://stackoverflow.com/questions/23320407/how-to-cancel-java-8-completable-future) if it's blocked.
 
-I think that the project has pretty good code coverage, but testing asynchronous stuff is hard. if you find any bug, please let me know.
+The project has pretty good test coverage, but testing asynchronous stuff is tricky. if you find any bug, please let me know.
 
 # spring-rxjava
 Converts between [RxJava](https://github.com/Netflix/RxJava) Observables and Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4.0.0.BUILD-SNAPSHOT/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html)
