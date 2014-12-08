@@ -15,114 +15,25 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
-import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
-import org.junit.After;
-import org.mockito.ArgumentCaptor;
+import net.javacrumbs.futureconverter.common.test.AbstractConverterHelperBasedTest;
+import net.javacrumbs.futureconverter.common.test.java8.Java8ConvertedFutureTestHelper;
+import net.javacrumbs.futureconverter.common.test.spring.SpringOriginalFutureTestHelper;
 import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureTask;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static net.javacrumbs.futureconverter.springjava.FutureConverter.toCompletableFuture;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
-public class ToCompletableFutureConverterTest extends AbstractConverterTest<
+public class ToCompletableFutureConverterTest extends AbstractConverterHelperBasedTest<
         ListenableFuture<String>,
-        CompletableFuture<String>,
-        Consumer<String>
-        > {
+        CompletableFuture<String>> {
 
-
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-    private final Consumer<String> callback = mock(Consumer.class);
-
-    private final Function<Throwable, Void> exceptionHandler = mock(Function.class);
-
-    // latch to wait for callback to be called
-    private final CountDownLatch callbackLatch = new CountDownLatch(1);
-
-    @After
-    public void shutdown() {
-        executorService.shutdown();
+    public ToCompletableFutureConverterTest() {
+        super(new SpringOriginalFutureTestHelper(), new Java8ConvertedFutureTestHelper());
     }
 
     @Override
     protected CompletableFuture<String> convert(ListenableFuture<String> originalFuture) {
         return toCompletableFuture(originalFuture);
-    }
-
-    @Override
-    protected ListenableFuture<String> createFinishedOriginal() {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> VALUE);
-        executorService.execute(listenable);
-        return listenable;
-    }
-
-    @Override
-    protected void addCallbackTo(CompletableFuture<String> convertedFuture) {
-        convertedFuture.thenAccept(callback).exceptionally(exceptionHandler).thenRun(callbackLatch::countDown);
-    }
-
-    @Override
-    protected ListenableFuture<String> createRunningFuture() {
-        ListenableFutureTask<String> listenableFuture = new ListenableFutureTask<>(() -> {
-            waitForSignal();
-            return VALUE;
-        });
-        executorService.execute(listenableFuture);
-        return listenableFuture;
-    }
-
-    @Override
-    protected void verifyCallbackCalledWithCorrectValue() throws InterruptedException {
-        callbackLatch.await();
-        verify(callback).accept(VALUE);
-    }
-
-    @Override
-    protected void waitForCalculationToFinish(CompletableFuture<String> convertedFuture) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        convertedFuture.thenRun(latch::countDown);
-        latch.await(1, TimeUnit.SECONDS);
-    }
-
-    @Override
-    protected void verifyCallbackCalledWithException(Exception exception) throws InterruptedException {
-        callbackLatch.await();
-        ArgumentCaptor<Exception> captor = ArgumentCaptor.forClass(Exception.class);
-        verify(exceptionHandler).apply(captor.capture());
-        assertEquals(CompletionException.class, captor.getValue().getClass());
-        assertEquals(exception, captor.getValue().getCause());
-
-    }
-
-    @Override
-    protected void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) throws InterruptedException {
-        callbackLatch.await();
-        ArgumentCaptor<Exception> captor = ArgumentCaptor.forClass(Exception.class);
-        verify(exceptionHandler).apply(captor.capture());
-        assertEquals(CompletionException.class, captor.getValue().getClass());
-        assertEquals(exceptionClass, captor.getValue().getCause().getClass());
-    }
-
-    @Override
-    protected ListenableFuture<String> createExceptionalFuture(Exception exception) {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(() -> {
-            throw exception;
-        });
-        executorService.execute(listenable);
-        return listenable;
     }
 }

@@ -32,21 +32,20 @@ import static org.junit.Assert.fail;
  *
  * @param <F> from
  * @param <T> to
- * @param <C> callback
  */
-public abstract class AbstractConverterTest<F extends Future<String>, T extends Future<String>, C> {
+public abstract class AbstractConverterTest<F extends Future<String>, T extends Future<String>> {
 
-    protected static final String VALUE = "test";
-
-    private final CountDownLatch waitLatch = new CountDownLatch(1);
+    public static final String VALUE = "test";
 
     protected abstract T convert(F originalFuture);
 
     protected abstract F createFinishedOriginal();
 
-    protected abstract void addCallbackTo(T convertedFuture);
+    protected abstract F createExceptionalFuture(Exception exception);
 
     protected abstract F createRunningFuture();
+
+    protected abstract void addCallbackTo(T convertedFuture);
 
     protected abstract void verifyCallbackCalledWithCorrectValue() throws InterruptedException;
 
@@ -56,11 +55,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
 
     protected abstract void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) throws InterruptedException;
 
-    protected abstract F createExceptionalFuture(Exception exception);
-
-    protected void waitForSignal() throws InterruptedException {
-        waitLatch.await();
-    }
+    protected abstract void finishOriginalFuture();
 
 
     @Test
@@ -82,7 +77,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
         addCallbackTo(convertedFuture);
         assertEquals(false, convertedFuture.isDone());
         assertEquals(false, convertedFuture.isCancelled());
-        waitLatch.countDown();
+        finishOriginalFuture();
 
         //wait for the result
         assertEquals(VALUE, convertedFuture.get());
@@ -92,6 +87,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
         waitForCalculationToFinish(convertedFuture);
         verifyCallbackCalledWithCorrectValue();
     }
+
 
     @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
