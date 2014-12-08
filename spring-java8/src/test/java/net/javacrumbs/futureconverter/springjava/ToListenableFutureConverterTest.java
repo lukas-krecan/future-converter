@@ -15,58 +15,65 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
-import org.junit.Test;
+import jdk.nashorn.internal.ir.annotations.Ignore;
+import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
-import java.io.IOException;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static net.javacrumbs.futureconverter.springjava.FutureConverter.toListenableFuture;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class ToListenableFutureConverterTest {
+public class ToListenableFutureConverterTest extends AbstractConverterTest<
+        CompletableFuture<String>,
+        ListenableFuture<String>,
+        ListenableFutureCallback<String>> {
 
-    public static final String VALUE = "test";
     public final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
-    private final CountDownLatch waitLatch = new CountDownLatch(1);
 
-    @Test
-    public void testConvertToListenableCompleted() throws ExecutionException, InterruptedException {
-        CompletableFuture<String> completable = CompletableFuture.completedFuture(VALUE);
-        ListenableFuture<String> listenable = toListenableFuture(completable);
-        assertEquals(VALUE, listenable.get());
-        assertEquals(true, listenable.isDone());
-        assertEquals(false, listenable.isCancelled());
-        listenable.addCallback(callback);
+
+    @Override
+    protected ListenableFuture<String> convert(CompletableFuture<String> originalFuture) {
+        return toListenableFuture(originalFuture);
+    }
+
+    @Override
+    protected CompletableFuture<String> createFinishedOriginal() {
+        return CompletableFuture.completedFuture(VALUE);
+    }
+
+    @Override
+    protected void addCallbackTo(ListenableFuture<String> convertedFuture) {
+        convertedFuture.addCallback(callback);
+    }
+
+    @Override
+    protected CompletableFuture<String> createRunningFuture() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                waitForSignal();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return VALUE;
+        });
+    }
+
+    @Override
+    protected void verifyCallbackCalledWithCorrectValue() {
         verify(callback).onSuccess(VALUE);
     }
 
-    @Test
-    public void testRun() throws ExecutionException, InterruptedException {
-        CompletableFuture<String> completable = createRunningFuture();
-        ListenableFuture<String> listenable = toListenableFuture(completable);
-        listenable.addCallback(callback);
-        assertEquals(false, listenable.isDone());
-        assertEquals(false, listenable.isCancelled());
-        waitLatch.countDown();
-
-        //wait for the result
-        assertEquals(VALUE, listenable.get());
-        assertEquals(true, listenable.isDone());
-        assertEquals(false, listenable.isCancelled());
-
-        //has to wait for the other thread
+    @Override
+    protected void waitForCalculationToFinish(ListenableFuture<String> convertedFuture) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        listenable.addCallback(new ListenableFutureCallback<String>() {
+        convertedFuture.addCallback(new ListenableFutureCallback<String>() {
             @Override
             public void onSuccess(String result) {
                 latch.countDown();
@@ -78,86 +85,28 @@ public class ToListenableFutureConverterTest {
             }
         });
         latch.await(1, TimeUnit.SECONDS);
-        verify(callback).onSuccess(VALUE);
     }
 
-    @Test
-    public void testCancelOriginal() throws ExecutionException, InterruptedException {
-        CompletableFuture<String> completable = createRunningFuture();
-        completable.cancel(true);
-
-        ListenableFuture<String> listenable = toListenableFuture(completable);
-
-        try {
-            listenable.get();
-            fail("Exception expected");
-        } catch (CancellationException e) {
-            //ok
-        }
-        assertEquals(true, listenable.isDone());
-        assertEquals(true, listenable.isCancelled());
-        listenable.addCallback(callback);
-        verify(callback).onFailure(any(RuntimeException.class));
+    @Override
+    protected void verifyCallbackCalledWithException(Exception exception) {
+        verify(callback).onFailure(exception);
     }
 
-    private CompletableFuture<String> createRunningFuture() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                waitLatch.await();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return VALUE;
-        });
+    @Override
+    protected void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) {
+        verify(callback).onFailure(any(exceptionClass));
     }
 
-    @Test
-    public void testCancelNew() throws ExecutionException, InterruptedException {
-        CompletableFuture<String> completable = createRunningFuture();
-        ListenableFuture<String> listenable = toListenableFuture(completable);
-        listenable.cancel(true);
-
-        try {
-            listenable.get();
-            fail("Exception expected");
-        } catch (CancellationException e) {
-            //ok
-        }
-        assertEquals(true, listenable.isDone());
-        assertEquals(true, listenable.isCancelled());
-        assertEquals(true, completable.isDone());
-        assertEquals(true, completable.isCancelled());
-        listenable.addCallback(callback);
-        verify(callback).onFailure(any(RuntimeException.class));
-    }
-
-    @Test
-    public void testConvertToListenableException() throws ExecutionException, InterruptedException {
-        Throwable exception = new RuntimeException("test");
-        doTestException(exception);
-    }
-
-    @Test
-    public void testConvertToListenableIOException() throws ExecutionException, InterruptedException {
-        Throwable exception = new IOException("test");
-        doTestException(exception);
-    }
-
-
-    private void doTestException(Throwable exception) throws InterruptedException {
+    @Override
+    protected CompletableFuture<String> createExceptionalFuture(Exception exception) {
         CompletableFuture<String> completable = new CompletableFuture<>();
         completable.completeExceptionally(exception);
-        ListenableFuture<String> listenable = toListenableFuture(completable);
-        try {
-            listenable.get();
-            fail("Exception expected");
-        } catch (ExecutionException e) {
-            assertEquals(exception, e.getCause());
-        }
-        assertEquals(true, listenable.isDone());
-        assertEquals(false, listenable.isCancelled());
-        ;
-        listenable.addCallback(callback);
-        verify(callback).onFailure(exception);
+        return completable;
+    }
+
+    @Override
+    @Ignore
+    public void testCancelBeforeConversion() throws ExecutionException, InterruptedException {
+        // CompletableFuture can not be canceled
     }
 }

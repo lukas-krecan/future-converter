@@ -18,6 +18,7 @@ package net.javacrumbs.futureconverter.springguava;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 

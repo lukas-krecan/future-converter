@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.springguava;
+package net.javacrumbs.futureconverter.common.test;
 
 import org.junit.Test;
 
@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 /**
@@ -47,13 +48,13 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
 
     protected abstract F createRunningFuture();
 
-    protected abstract void verifyCallbackCalledWithCorrectValue();
+    protected abstract void verifyCallbackCalledWithCorrectValue() throws InterruptedException;
 
     protected abstract void waitForCalculationToFinish(T convertedFuture) throws InterruptedException;
 
-    protected abstract void verifyCallbackCalledWithException(Exception exception);
+    protected abstract void verifyCallbackCalledWithException(Exception exception) throws InterruptedException;
 
-    protected abstract void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass);
+    protected abstract void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) throws InterruptedException;
 
     protected abstract F createExceptionalFuture(Exception exception);
 
@@ -63,7 +64,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
 
 
     @Test
-    public void testConvertToGuavaListenableCompleted() throws ExecutionException, InterruptedException {
+    public void testConvertCompleted() throws ExecutionException, InterruptedException {
         F originalFuture = createFinishedOriginal();
 
         T converted = convert(originalFuture);
@@ -75,7 +76,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
     }
 
     @Test
-    public void testRun() throws ExecutionException, InterruptedException {
+    public void testConvertRunning() throws ExecutionException, InterruptedException {
         F originalFuture = createRunningFuture();
         T convertedFuture = convert(originalFuture);
         addCallbackTo(convertedFuture);
@@ -108,7 +109,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
         assertEquals(true, convertedFuture.isDone());
         assertEquals(true, convertedFuture.isCancelled());
         addCallbackTo(convertedFuture);
-        verifyCallbackCalledWithException(RuntimeException.class);
+        verifyCallbackCalledWithException(CancellationException.class);
     }
 
     @Test
@@ -128,18 +129,54 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
         assertEquals(true, originalFuture.isDone());
         assertEquals(true, originalFuture.isCancelled());
         addCallbackTo(convertedFuture);
-        verifyCallbackCalledWithException(RuntimeException.class);
+        verifyCallbackCalledWithException(CancellationException.class);
+    }
+
+    @Test
+    public void testCancelBeforeConversion() throws ExecutionException, InterruptedException {
+        F originalFuture = createRunningFuture();
+        originalFuture.cancel(true);
+
+        T convertedFuture = convert(originalFuture);
+        assertFalse(convertedFuture.cancel(true));
+
+        try {
+            convertedFuture.get();
+            fail("Exception expected");
+        } catch (CancellationException e) {
+            //ok
+        }
+        assertEquals(true, originalFuture.isDone());
+        assertEquals(true, originalFuture.isCancelled());
+        assertEquals(true, convertedFuture.isDone());
+        assertEquals(true, convertedFuture.isCancelled());
+    }
+
+    @Test
+    public void testCancelCompleted() throws ExecutionException, InterruptedException {
+        F originalFuture = createFinishedOriginal();
+
+        T convertedFuture = convert(originalFuture);
+        addCallbackTo(convertedFuture);
+        waitForCalculationToFinish(convertedFuture);
+
+        assertEquals(VALUE, convertedFuture.get());
+        assertEquals(true, convertedFuture.isDone());
+        assertEquals(false, convertedFuture.isCancelled());
+
+        verifyCallbackCalledWithCorrectValue();
+        assertFalse(convertedFuture.cancel(true));
     }
 
 
     @Test
-    public void testConvertToListenableException() throws ExecutionException, InterruptedException {
+    public void testConvertWithException() throws ExecutionException, InterruptedException {
         Exception exception = new RuntimeException("test");
         doTestException(exception);
     }
 
     @Test
-    public void testConvertToListenableIOException() throws ExecutionException, InterruptedException {
+    public void testConvertWithIOException() throws ExecutionException, InterruptedException {
         Exception exception = new IOException("test");
         doTestException(exception);
     }

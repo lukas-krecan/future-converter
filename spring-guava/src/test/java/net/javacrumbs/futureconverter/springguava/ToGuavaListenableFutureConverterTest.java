@@ -18,16 +18,13 @@ package net.javacrumbs.futureconverter.springguava;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.junit.Test;
+import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.util.concurrent.ListenableFuture;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
