@@ -23,12 +23,13 @@
 
 
     <modules>
+        <module>common</module>
+        <module>common-test</module>
         <module>spring-java8</module>
         <module>rxjava-java8</module>
         <module>spring-rxjava</module>
         <module>spring-guava</module>
-        <module>common</module>
-        <module>common-test</module>
+        <module>java8-guava</module>
     </modules>
 
     <dependencies>
