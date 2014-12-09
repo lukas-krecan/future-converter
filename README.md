@@ -24,7 +24,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>spring-rxjava</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </dependency>
 
 And then use
@@ -47,7 +47,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>spring-java8</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </dependency>
 
 And then use
@@ -67,7 +67,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>rxjava-java8</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </dependency>
 
 And then use
@@ -89,7 +89,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>spring-guava</artifactId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </dependency>
 
 And then use
@@ -102,3 +102,25 @@ And then use
     ...
     org.springframework.util.concurrent.ListenableFuture<String> springListenableFuture
             = toSpringListenableFuture(guavaListenableFuture);
+
+# java8-guava
+Converts between Java 8 [CompletableFuture](http://download.java.net/lambda/b88/docs/api/java/util/concurrent/CompletableFuture.html)
+and Guava [ListenableFuture](http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/util/concurrent/ListenableFuture.html)
+
+
+Import the dependency
+
+    <dependency>
+        <groupId>net.javacrumbs.future-converter</groupId>
+        <artifactId>java8-guava</artifactId>
+        <version>0.0.4</version>
+    </dependency>
+
+And then use
+
+    import static net.javacrumbs.futureconverter.java8guava.FutureConverter.*;
+
+    ...
+    ListenableFuture<String> guavaListenableFuture = toListenableFuture(completable);
+    ...
+    CompletableFuture<String> completable = toCompletableFuture(listenable);;
