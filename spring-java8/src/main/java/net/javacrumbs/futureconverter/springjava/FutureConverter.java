@@ -33,7 +33,11 @@ public class FutureConverter {
      * @return
      */
     public static <T> ListenableFuture<T> toListenableFuture(CompletableFuture<T> completableFuture) {
-        return new ListenableCompletableFutureWrapper<>(completableFuture);
+        if (completableFuture instanceof CompletableListenableFuture) {
+            return ((CompletableListenableFuture<T>) completableFuture).getListenableFuture();
+        } else {
+            return new ListenableCompletableFutureWrapper<>(completableFuture);
+        }
     }
 
     /**
@@ -44,18 +48,15 @@ public class FutureConverter {
      * @return
      */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-        return buildCompletableFutureFromListenableFuture(listenableFuture);
+        if (listenableFuture instanceof ListenableCompletableFutureWrapper) {
+            return ((ListenableCompletableFutureWrapper<T>) listenableFuture).getWrappedFuture();
+        } else {
+            return buildCompletableFutureFromListenableFuture(listenableFuture);
+        }
     }
 
     private static <T> CompletableFuture<T> buildCompletableFutureFromListenableFuture(final ListenableFuture<T> listenableFuture) {
-        CompletableFuture<T> completable = new CompletableFuture<T>() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                boolean result = listenableFuture.cancel(mayInterruptIfRunning);
-                super.cancel(mayInterruptIfRunning);
-                return result;
-            }
-        };
+        CompletableFuture<T> completable = new CompletableListenableFuture<T>(listenableFuture);
         listenableFuture.addCallback(new ListenableFutureCallback<T>() {
             @Override
             public void onSuccess(T result) {
@@ -70,4 +71,22 @@ public class FutureConverter {
         return completable;
     }
 
+    private static final class CompletableListenableFuture<T> extends CompletableFuture<T> {
+        private final ListenableFuture<T> listenableFuture;
+
+        public CompletableListenableFuture(ListenableFuture<T> listenableFuture) {
+            this.listenableFuture = listenableFuture;
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            boolean result = listenableFuture.cancel(mayInterruptIfRunning);
+            super.cancel(mayInterruptIfRunning);
+            return result;
+        }
+
+        public ListenableFuture<T> getListenableFuture() {
+            return listenableFuture;
+        }
+    }
 }

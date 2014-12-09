@@ -23,7 +23,6 @@ import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 public class SpringOriginalFutureTestHelper extends CommonOriginalFutureTestHelper implements OriginalFutureTestHelper<ListenableFuture<String>> {

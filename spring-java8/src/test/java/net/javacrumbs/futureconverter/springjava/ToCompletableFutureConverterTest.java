@@ -23,6 +23,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import java.util.concurrent.CompletableFuture;
 
 import static net.javacrumbs.futureconverter.springjava.FutureConverter.toCompletableFuture;
+import static net.javacrumbs.futureconverter.springjava.FutureConverter.toListenableFuture;
 
 public class ToCompletableFutureConverterTest extends AbstractConverterHelperBasedTest<
         ListenableFuture<String>,
@@ -35,5 +36,10 @@ public class ToCompletableFutureConverterTest extends AbstractConverterHelperBas
     @Override
     protected CompletableFuture<String> convert(ListenableFuture<String> originalFuture) {
         return toCompletableFuture(originalFuture);
+    }
+
+    @Override
+    protected ListenableFuture<String> convertBack(CompletableFuture<String> converted) {
+        return toListenableFuture(converted);
     }
 }

@@ -30,10 +30,8 @@ import static org.mockito.Mockito.verify;
 public class SpringConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
     public final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
 
-    @Override
-    public void verifyCallbackCalledWithCorrectValue() {
-        verify(callback).onSuccess(AbstractConverterTest.VALUE);
-    }
+    // to wait for callback to be called
+    private final CountDownLatch callbackLatch = new CountDownLatch(1);
 
     @Override
     public void waitForCalculationToFinish(ListenableFuture<String> convertedFuture) throws InterruptedException {
@@ -53,17 +51,45 @@ public class SpringConvertedFutureTestHelper implements ConvertedFutureTestHelpe
     }
 
     @Override
+    public void verifyCallbackCalledWithCorrectValue() {
+        waitForCallback();
+        verify(callback).onSuccess(AbstractConverterTest.VALUE);
+    }
+
+
+    @Override
     public void verifyCallbackCalledWithException(Exception exception) {
+        waitForCallback();
         verify(callback).onFailure(exception);
     }
 
     @Override
     public void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) {
+        waitForCallback();
         verify(callback).onFailure(any(exceptionClass));
+    }
+
+    private void waitForCallback() {
+        try {
+            callbackLatch.await();
+        } catch (InterruptedException e) {
+            // ok
+        }
     }
 
     @Override
     public void addCallbackTo(ListenableFuture<String> convertedFuture) {
         convertedFuture.addCallback(callback);
+        convertedFuture.addCallback(new ListenableFutureCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                callbackLatch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callbackLatch.countDown();
+            }
+        });
     }
 }

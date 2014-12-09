@@ -20,6 +20,7 @@ import net.javacrumbs.futureconverter.common.test.guava.GuavaOriginalFutureTestH
 import net.javacrumbs.futureconverter.common.test.spring.SpringConvertedFutureTestHelper;
 import org.springframework.util.concurrent.ListenableFuture;
 
+import static net.javacrumbs.futureconverter.springguava.FutureConverter.toGuavaListenableFuture;
 import static net.javacrumbs.futureconverter.springguava.FutureConverter.toSpringListenableFuture;
 
 public class ToSpringListenableFutureConverterTest extends AbstractConverterHelperBasedTest<
@@ -33,6 +34,11 @@ public class ToSpringListenableFutureConverterTest extends AbstractConverterHelp
     @Override
     protected ListenableFuture<String> convert(com.google.common.util.concurrent.ListenableFuture<String> originalFuture) {
         return toSpringListenableFuture(originalFuture);
+    }
+
+    @Override
+    protected com.google.common.util.concurrent.ListenableFuture<String> convertBack(ListenableFuture<String> converted) {
+        return toGuavaListenableFuture(converted);
     }
 
 }

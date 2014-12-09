@@ -21,11 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import net.javacrumbs.futureconverter.common.test.ConvertedFutureTestHelper;
-import org.springframework.core.task.AsyncListenableTaskExecutor;
-import org.springframework.core.task.support.TaskExecutorAdapter;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
@@ -34,6 +31,9 @@ import static org.mockito.Mockito.verify;
 
 public class GuavaConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
     public final FutureCallback<String> callback = mock(FutureCallback.class);
+
+    // to wait for callback to be called
+    private final CountDownLatch callbackLatch = new CountDownLatch(1);
 
     @Override
     public void waitForCalculationToFinish(com.google.common.util.concurrent.ListenableFuture<String> convertedFuture) throws InterruptedException {
@@ -56,22 +56,39 @@ public class GuavaConvertedFutureTestHelper implements ConvertedFutureTestHelper
 
     @Override
     public void verifyCallbackCalledWithException(Exception exception) {
+        waitForCallback();
         verify(callback).onFailure(exception);
     }
 
-
     @Override
     public void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) {
+        waitForCallback();
         verify(callback).onFailure(any(exceptionClass));
+    }
+
+    @Override
+    public void verifyCallbackCalledWithCorrectValue() {
+        waitForCallback();
+        verify(callback).onSuccess(AbstractConverterTest.VALUE);
+    }
+
+
+    private void waitForCallback() {
+        try {
+            callbackLatch.await();
+        } catch (InterruptedException e) {
+            // ok
+        }
     }
 
     @Override
     public void addCallbackTo(com.google.common.util.concurrent.ListenableFuture<String> convertedFuture) {
         Futures.addCallback(convertedFuture, callback, MoreExecutors.directExecutor());
-    }
-
-    @Override
-    public void verifyCallbackCalledWithCorrectValue() {
-        verify(callback).onSuccess(AbstractConverterTest.VALUE);
+        convertedFuture.addListener(new Runnable() {
+            @Override
+            public void run() {
+                callbackLatch.countDown();
+            }
+        }, MoreExecutors.directExecutor());
     }
 }

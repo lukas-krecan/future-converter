@@ -23,6 +23,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 /**
  * Converts between Guava {@link com.google.common.util.concurrent.ListenableFuture} and Spring 4 {@link org.springframework.util.concurrent.ListenableFuture}.
@@ -37,7 +38,11 @@ public class FutureConverter {
      * @return
      */
     public static <T> ListenableFuture<T> toSpringListenableFuture(com.google.common.util.concurrent.ListenableFuture<T> guavaListenableFuture) {
-        return new SpringListenableWrappingGuavaListenableFuture<T>(guavaListenableFuture);
+        if (guavaListenableFuture instanceof GuavaListenableWrappingSpringListenableFuture) {
+            return ((GuavaListenableWrappingSpringListenableFuture<T>) guavaListenableFuture).getWrappedFuture();
+        } else {
+            return new SpringListenableWrappingGuavaListenableFuture<T>(guavaListenableFuture);
+        }
     }
 
     /**
@@ -49,7 +54,11 @@ public class FutureConverter {
      * @return
      */
     public static <T> com.google.common.util.concurrent.ListenableFuture<T> toGuavaListenableFuture(ListenableFuture<T> springListenableFuture) {
-        return new GuavaListenableWrappingSpringListenableFuture<T>(springListenableFuture);
+        if (springListenableFuture instanceof SpringListenableWrappingGuavaListenableFuture) {
+            return ((SpringListenableWrappingGuavaListenableFuture<T>) springListenableFuture).getWrappedFuture();
+        } else {
+            return new GuavaListenableWrappingSpringListenableFuture<T>(springListenableFuture);
+        }
     }
 
     /**
@@ -58,16 +67,13 @@ public class FutureConverter {
      * @param <T>
      */
     private static class SpringListenableWrappingGuavaListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
-        private final com.google.common.util.concurrent.ListenableFuture<T> guavaListenableFuture;
-
         public SpringListenableWrappingGuavaListenableFuture(com.google.common.util.concurrent.ListenableFuture<T> guavaListenableFuture) {
             super(guavaListenableFuture);
-            this.guavaListenableFuture = guavaListenableFuture;
         }
 
         @Override
         public void addCallback(final ListenableFutureCallback<? super T> callback) {
-            Futures.addCallback(guavaListenableFuture, new FutureCallback<T>() {
+            Futures.addCallback(getWrappedFuture(), new FutureCallback<T>() {
                 @Override
                 public void onSuccess(T result) {
                     callback.onSuccess(result);
@@ -79,19 +85,22 @@ public class FutureConverter {
                 }
             }, MoreExecutors.directExecutor());
         }
+
+        @Override
+        public com.google.common.util.concurrent.ListenableFuture<T> getWrappedFuture() {
+            return (com.google.common.util.concurrent.ListenableFuture<T>) super.getWrappedFuture();
+        }
     }
 
     private static class GuavaListenableWrappingSpringListenableFuture<T> extends FutureWrapper<T> implements com.google.common.util.concurrent.ListenableFuture<T> {
-        private final ListenableFuture<T> springListenableFuture;
 
         public GuavaListenableWrappingSpringListenableFuture(ListenableFuture<T> springListenableFuture) {
             super(springListenableFuture);
-            this.springListenableFuture = springListenableFuture;
         }
 
         @Override
         public void addListener(final Runnable listener, final Executor executor) {
-            springListenableFuture.addCallback(new ListenableFutureCallback<T>() {
+            getWrappedFuture().addCallback(new ListenableFutureCallback<T>() {
                 @Override
                 public void onSuccess(T result) {
                     executor.execute(listener);
@@ -102,6 +111,11 @@ public class FutureConverter {
                     executor.execute(listener);
                 }
             });
+        }
+
+        @Override
+        public ListenableFuture<T> getWrappedFuture() {
+            return (ListenableFuture<T>) super.getWrappedFuture();
         }
     }
 }

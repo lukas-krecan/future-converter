@@ -22,6 +22,7 @@ import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Future;
 
 /**
  * Wraps {@link java.util.concurrent.CompletableFuture} and provides {@link org.springframework.util.concurrent.ListenableFuture} interface.
@@ -49,5 +50,10 @@ class ListenableCompletableFutureWrapper<T> extends FutureWrapper<T> implements 
     @Override
     public void addCallback(ListenableFutureCallback<? super T> callback) {
         callbackRegistry.addCallback(callback);
+    }
+
+    @Override
+    public CompletableFuture<T> getWrappedFuture() {
+        return (CompletableFuture<T>) super.getWrappedFuture();
     }
 }

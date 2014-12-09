@@ -31,6 +31,9 @@ public abstract class AbstractConverterHelperBasedTest<F extends Future<String>,
     protected abstract T convert(F originalFuture);
 
     @Override
+    protected abstract F convertBack(T converted);
+
+    @Override
     protected F createFinishedOriginal() {
         return originalFutureTestHelper.createFinishedOriginal();
     }

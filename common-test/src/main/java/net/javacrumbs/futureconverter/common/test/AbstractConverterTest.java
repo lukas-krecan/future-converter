@@ -16,6 +16,7 @@
 package net.javacrumbs.futureconverter.common.test;
 
 import org.junit.Test;
+import org.mockito.internal.matchers.Null;
 
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
@@ -25,6 +26,7 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 /**
@@ -38,6 +40,8 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
     public static final String VALUE = "test";
 
     protected abstract T convert(F originalFuture);
+
+    protected abstract F convertBack(T converted);
 
     protected abstract F createFinishedOriginal();
 
@@ -146,6 +150,18 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
         assertEquals(true, originalFuture.isCancelled());
         assertEquals(true, convertedFuture.isDone());
         assertEquals(true, convertedFuture.isCancelled());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void shouldThrowNullPointerExceptionOnNull() {
+        convert(null);
+    }
+
+    @Test
+    public void shouldConvertBackToTheSameInstance() {
+        F originalFuture = createFinishedOriginal();
+        T converted = convert(originalFuture);
+        assertSame(originalFuture, convertBack(converted));
     }
 
     @Test
