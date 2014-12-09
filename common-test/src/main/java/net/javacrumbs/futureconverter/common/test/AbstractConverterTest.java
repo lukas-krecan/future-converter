@@ -16,11 +16,9 @@
 package net.javacrumbs.futureconverter.common.test;
 
 import org.junit.Test;
-import org.mockito.internal.matchers.Null;
 
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 

@@ -24,7 +24,6 @@ import net.javacrumbs.futureconverter.common.test.OriginalFutureTestHelper;
 import net.javacrumbs.futureconverter.common.test.common.CommonOriginalFutureTestHelper;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 public class GuavaOriginalFutureTestHelper extends CommonOriginalFutureTestHelper implements OriginalFutureTestHelper<ListenableFuture<String>> {

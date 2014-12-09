@@ -23,7 +23,6 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 
 /**
  * Converts between Guava {@link com.google.common.util.concurrent.ListenableFuture} and Spring 4 {@link org.springframework.util.concurrent.ListenableFuture}.
