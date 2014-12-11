@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import net.javacrumbs.futureconverter.common.test.ConvertedFutureTestHelper;
+import net.javacrumbs.futureconverter.common.test.common.CommonConvertedFutureTestHelper;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -29,11 +30,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class GuavaConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
+public class GuavaConvertedFutureTestHelper extends CommonConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
     public final FutureCallback<String> callback = mock(FutureCallback.class);
-
-    // to wait for callback to be called
-    private final CountDownLatch callbackLatch = new CountDownLatch(1);
 
     @Override
     public void waitForCalculationToFinish(com.google.common.util.concurrent.ListenableFuture<String> convertedFuture) throws InterruptedException {
@@ -57,6 +55,7 @@ public class GuavaConvertedFutureTestHelper implements ConvertedFutureTestHelper
     @Override
     public void verifyCallbackCalledWithException(Exception exception) {
         waitForCallback();
+        ;
         verify(callback).onFailure(exception);
     }
 
@@ -72,22 +71,13 @@ public class GuavaConvertedFutureTestHelper implements ConvertedFutureTestHelper
         verify(callback).onSuccess(AbstractConverterTest.VALUE);
     }
 
-
-    private void waitForCallback() {
-        try {
-            callbackLatch.await();
-        } catch (InterruptedException e) {
-            // ok
-        }
-    }
-
     @Override
     public void addCallbackTo(com.google.common.util.concurrent.ListenableFuture<String> convertedFuture) {
         Futures.addCallback(convertedFuture, callback, MoreExecutors.directExecutor());
         convertedFuture.addListener(new Runnable() {
             @Override
             public void run() {
-                callbackLatch.countDown();
+                callbackCalled();
             }
         }, MoreExecutors.directExecutor());
     }

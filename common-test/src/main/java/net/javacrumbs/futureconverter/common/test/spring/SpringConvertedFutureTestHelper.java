@@ -17,6 +17,7 @@ package net.javacrumbs.futureconverter.common.test.spring;
 
 import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import net.javacrumbs.futureconverter.common.test.ConvertedFutureTestHelper;
+import net.javacrumbs.futureconverter.common.test.common.CommonConvertedFutureTestHelper;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
@@ -27,11 +28,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class SpringConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
+public class SpringConvertedFutureTestHelper extends CommonConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
     public final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
-
-    // to wait for callback to be called
-    private final CountDownLatch callbackLatch = new CountDownLatch(1);
 
     @Override
     public void waitForCalculationToFinish(ListenableFuture<String> convertedFuture) throws InterruptedException {
@@ -69,13 +67,6 @@ public class SpringConvertedFutureTestHelper implements ConvertedFutureTestHelpe
         verify(callback).onFailure(any(exceptionClass));
     }
 
-    private void waitForCallback() {
-        try {
-            callbackLatch.await();
-        } catch (InterruptedException e) {
-            // ok
-        }
-    }
 
     @Override
     public void addCallbackTo(ListenableFuture<String> convertedFuture) {
@@ -83,12 +74,12 @@ public class SpringConvertedFutureTestHelper implements ConvertedFutureTestHelpe
         convertedFuture.addCallback(new ListenableFutureCallback<String>() {
             @Override
             public void onSuccess(String result) {
-                callbackLatch.countDown();
+                callbackCalled();
             }
 
             @Override
             public void onFailure(Throwable t) {
-                callbackLatch.countDown();
+                callbackCalled();
             }
         });
     }

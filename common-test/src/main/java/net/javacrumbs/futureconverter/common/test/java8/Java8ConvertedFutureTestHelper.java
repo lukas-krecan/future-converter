@@ -17,37 +17,32 @@ package net.javacrumbs.futureconverter.common.test.java8;
 
 import net.javacrumbs.futureconverter.common.test.AbstractConverterTest;
 import net.javacrumbs.futureconverter.common.test.ConvertedFutureTestHelper;
-import org.mockito.ArgumentCaptor;
+import net.javacrumbs.futureconverter.common.test.common.CommonConvertedFutureTestHelper;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-public class Java8ConvertedFutureTestHelper implements ConvertedFutureTestHelper<CompletableFuture<String>> {
+public class Java8ConvertedFutureTestHelper extends CommonConvertedFutureTestHelper implements ConvertedFutureTestHelper<CompletableFuture<String>> {
 
     private final Consumer<String> callback = mock(Consumer.class);
 
-    private final Function<Throwable, Void> exceptionHandler = mock(Function.class);
-
-    // latch to wait for callback to be called
-    private final CountDownLatch callbackLatch = new CountDownLatch(1);
+    private final Function<Throwable, String> exceptionHandler = mock(Function.class);
 
     @Override
     public void addCallbackTo(CompletableFuture<String> convertedFuture) {
-        convertedFuture.thenAccept(callback).exceptionally(exceptionHandler).thenRun(callbackLatch::countDown);
+        convertedFuture.exceptionally(exceptionHandler).thenAccept(callback).thenRun(this::callbackCalled);
     }
-
 
     @Override
     public void verifyCallbackCalledWithCorrectValue() throws InterruptedException {
-        callbackLatch.await();
+        waitForCallback();
         verify(callback).accept(AbstractConverterTest.VALUE);
     }
 
@@ -59,22 +54,16 @@ public class Java8ConvertedFutureTestHelper implements ConvertedFutureTestHelper
     }
 
     @Override
-    public void verifyCallbackCalledWithException(Exception exception) throws InterruptedException {
-        callbackLatch.await();
-        ArgumentCaptor<Exception> captor = ArgumentCaptor.forClass(Exception.class);
-        verify(exceptionHandler).apply(captor.capture());
-        assertEquals(CompletionException.class, captor.getValue().getClass());
-        assertEquals(exception, captor.getValue().getCause());
+    public void verifyCallbackCalledWithException(Exception exception) {
+        waitForCallback();
+        verify(exceptionHandler).apply(exception);
 
     }
 
     @Override
-    public void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) throws InterruptedException {
-        callbackLatch.await();
-        ArgumentCaptor<Exception> captor = ArgumentCaptor.forClass(Exception.class);
-        verify(exceptionHandler).apply(captor.capture());
-        assertEquals(CompletionException.class, captor.getValue().getClass());
-        assertEquals(exceptionClass, captor.getValue().getCause().getClass());
+    public void verifyCallbackCalledWithException(Class<? extends Exception> exceptionClass) {
+        waitForCallback();
+        verify(exceptionHandler).apply(any(exceptionClass));
     }
 
 }
