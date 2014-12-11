@@ -55,7 +55,6 @@ public class GuavaConvertedFutureTestHelper extends CommonConvertedFutureTestHel
     @Override
     public void verifyCallbackCalledWithException(Exception exception) {
         waitForCallback();
-        ;
         verify(callback).onFailure(exception);
     }
 
