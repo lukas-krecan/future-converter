@@ -23,8 +23,8 @@ Import the dependency
 
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
-        <artifactId>spring-rxjava</artifactId>
-        <version>0.0.4</version>
+        <artifactId>future-converter-spring-rxjava</artifactId>
+        <version>0.1.0</version>
     </dependency>
 
 And then use
@@ -37,8 +37,6 @@ And then use
     Observable<String> observable = toObservable(listenable);
 
 
-
-
 # spring-java8
 Converts between Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4.0.0.BUILD-SNAPSHOT/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html) and Java 8 [CompletableFuture](http://download.java.net/lambda/b88/docs/api/java/util/concurrent/CompletableFuture.html)
 
@@ -46,8 +44,8 @@ Import the dependency
 
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
-        <artifactId>spring-java8</artifactId>
-        <version>0.0.4</version>
+        <artifactId>future-converter-spring-java8</artifactId>
+        <version>0.1.0</version>
     </dependency>
 
 And then use
@@ -66,8 +64,8 @@ Import the dependency
 
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
-        <artifactId>rxjava-java8</artifactId>
-        <version>0.0.4</version>
+        <artifactId>future-converter-rxjava-java8</artifactId>
+        <version>0.1.0</version>
     </dependency>
 
 And then use
@@ -88,8 +86,8 @@ Import the dependency
 
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
-        <artifactId>spring-guava</artifactId>
-        <version>0.0.4</version>
+        <artifactId>future-converter-spring-guava</artifactId>
+        <version>0.1.0</version>
     </dependency>
 
 And then use
@@ -112,8 +110,8 @@ Import the dependency
 
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
-        <artifactId>java8-guava</artifactId>
-        <version>0.0.4</version>
+        <artifactId>future-converter-java8-guava</artifactId>
+        <version>0.1.0</version>
     </dependency>
 
 And then use
