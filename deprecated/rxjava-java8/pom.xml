@@ -8,12 +8,12 @@
         <version>0.1.0</version>
     </parent>
 
-    <artifactId>spring-java8</artifactId>
+    <artifactId>rxjava-java8</artifactId>
     <packaging>pom</packaging>
 
     <distributionManagement>
         <relocation>
-            <artifactId>future-converter-spring-java8</artifactId>
+            <artifactId>future-converter-rxjava-java8</artifactId>
             <message>Original artifact names were to generic so there was a danger of a JAR filename clash.</message>
         </relocation>
     </distributionManagement>
