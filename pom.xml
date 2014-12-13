@@ -5,7 +5,7 @@
 
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter</artifactId>
-    <version>0.0.5-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -22,11 +22,6 @@
         </developer>
     </developers>
 
-    <properties>
-        <!-- Unfortunately the artifact name is quite generic so we have to rename the JAR file to make it more clear -->
-        <finalName>future-converter-${project.artifactId}</finalName>
-    </properties>
-
     <modules>
         <module>common</module>
         <module>common-test</module>
@@ -35,6 +30,7 @@
         <module>spring-rxjava</module>
         <module>spring-guava</module>
         <module>java8-guava</module>
+        <module>deprecated</module>
     </modules>
 
     <dependencies>
@@ -80,7 +76,7 @@
             </dependency>
             <dependency>
                 <groupId>net.javacrumbs.future-converter</groupId>
-                <artifactId>common-test</artifactId>
+                <artifactId>future-converter-common-test</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -135,11 +131,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-            </plugin>
-            <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
                 <artifactId>maven-license-plugin</artifactId>
                 <version>1.9.0</version>
@@ -154,31 +145,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.5</version>
-                <configuration>
-                    <finalName>${finalName}</finalName>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.10.1</version>
-                <configuration>
-                    <finalName>${finalName}</finalName>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.4</version>
-                <configuration>
-                    <finalName>${finalName}</finalName>
-                </configuration>
             </plugin>
         </plugins>
 
         <pluginManagement>
             <plugins>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.2</version>
                 </plugin>
