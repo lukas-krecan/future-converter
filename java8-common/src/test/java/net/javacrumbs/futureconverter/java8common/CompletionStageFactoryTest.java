@@ -5,22 +5,73 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 public class CompletionStageFactoryTest {
     public static final String VALUE = "test";
+    public static final RuntimeException EXCEPTION = new RuntimeException("Test");
     private final CompletionStageFactory factory = new CompletionStageFactory();
 
     @Test
-    public void shouldCreateCompletableFuture() {
+    public void acceptShouldWork() {
         ListenableFuture<String> listenableFuture = Futures.immediateFuture(VALUE);
 
-        CompletionStage<String> completionStage = factory.createCompletableFuture((onSuccess, onError) -> {
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        Consumer<String> consumer = mock(Consumer.class);
+        completionStage.thenAccept(consumer);
+        verify(consumer).accept(VALUE);
+    }
+
+    @Test
+    public void exceptionallyShouldWorkAndPassValueDownstream() {
+        ListenableFuture<String> listenableFuture = Futures.immediateFailedFuture(EXCEPTION);
+
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        Consumer<String> consumer = mock(Consumer.class);
+        Function<Throwable, String> function = mock(Function.class);
+        when(function.apply(EXCEPTION)).thenReturn(VALUE);
+        completionStage.exceptionally(function).thenAccept(consumer);
+        verify(function).apply(EXCEPTION);
+        verify(consumer).accept(VALUE);
+    }
+
+    @Test
+    public void thenApplyShouldTransformTheValue() {
+        ListenableFuture<String> listenableFuture = Futures.immediateFuture(VALUE);
+
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        Consumer<Integer> consumer = mock(Consumer.class);
+        completionStage.thenApply(String::length).thenApply(i -> i * 2).thenAccept(consumer);
+        verify(consumer).accept(8);
+    }
+
+    @Test
+    public void shouldNotFailOnException() {
+        ListenableFuture<String> listenableFuture = Futures.immediateFailedFuture(EXCEPTION);
+
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        Consumer<Integer> consumer = mock(Consumer.class);
+        Function<Throwable, Void> errorFunction = mock(Function.class);
+        completionStage.thenApply(String::length).thenApply(i -> i * 2).thenAccept(consumer).exceptionally(errorFunction);
+        verifyZeroInteractions(consumer);
+        verify(errorFunction).apply(isA(CompletionException.class));
+    }
+
+    private CompletionStage<String> createCompletionStage(ListenableFuture<String> listenableFuture) {
+        return factory.createCompletableFuture((onSuccess, onError) -> {
             Futures.addCallback(listenableFuture, new FutureCallback<String>() {
                 @Override
                 public void onSuccess(String result) {
@@ -33,13 +84,6 @@ public class CompletionStageFactoryTest {
                 }
             });
         });
-
-        assertNotNull(completionStage);
-
-        Consumer<String> consumer = mock(Consumer.class);
-        completionStage.thenAccept(consumer);
-
-        verify(consumer).accept(VALUE);
     }
 
 }

@@ -18,5 +18,5 @@ package net.javacrumbs.futureconverter.java8common;
 import java.util.function.Consumer;
 
 public interface CompletionStageCallback<T> {
-    public void call(Consumer<? super T> onSuccess, Consumer<Throwable> onError);
+    public void register(Consumer<? super T> onSuccess, Consumer<Throwable> onError);
 }

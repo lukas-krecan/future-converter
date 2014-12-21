@@ -15,7 +15,11 @@
  */
 package net.javacrumbs.futureconverter.java8common;
 
+import org.springframework.util.concurrent.ListenableFutureCallback;
+import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
+
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -24,15 +28,27 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 class SimpleCompletionStage<T> implements CompletionStage<T> {
-    private final CompletionStageCallback<T> callback;
+    private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
 
     public SimpleCompletionStage(CompletionStageCallback<T> callback) {
-        this.callback = callback;
+        callback.register(callbackRegistry::success, callbackRegistry::failure);
     }
 
     @Override
     public <U> CompletionStage<U> thenApply(Function<? super T, ? extends U> fn) {
-        return null;
+        return new SimpleCompletionStage<>((onSuccess, onError) -> {
+            callbackRegistry.addCallback(new ListenableFutureCallback<T>() {
+                @Override
+                public void onSuccess(T result) {
+                    onSuccess.accept(fn.apply(result));
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    onError.accept(wrapException(t));
+                }
+            });
+        });
     }
 
     @Override
@@ -47,8 +63,20 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
 
     @Override
     public CompletionStage<Void> thenAccept(Consumer<? super T> action) {
-        callback.call(action, null);
-        return null;
+        return new SimpleCompletionStage<>((onSuccess, onError) -> {
+            callbackRegistry.addCallback(new ListenableFutureCallback<T>() {
+                @Override
+                public void onSuccess(T result) {
+                    action.accept(result);
+                    onSuccess.accept(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    onError.accept(wrapException(t));
+                }
+            });
+        });
     }
 
     @Override
@@ -183,7 +211,20 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
 
     @Override
     public CompletionStage<T> exceptionally(Function<Throwable, ? extends T> fn) {
-        return null;
+        return new SimpleCompletionStage<>((onSuccess, onError) -> {
+            callbackRegistry.addCallback(new ListenableFutureCallback<T>() {
+                @Override
+                public void onSuccess(T result) {
+                    // TODO: check
+                    onSuccess.accept(result);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    onSuccess.accept(fn.apply(t));
+                }
+            });
+        });
     }
 
     @Override
@@ -219,5 +260,13 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public CompletableFuture<T> toCompletableFuture() {
         return null;
+    }
+
+    private final Throwable wrapException(Throwable e) {
+        if (e instanceof CompletionException) {
+            return e;
+        } else {
+            return new CompletionException(e);
+        }
     }
 }
