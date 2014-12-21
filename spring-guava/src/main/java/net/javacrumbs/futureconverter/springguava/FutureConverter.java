@@ -98,16 +98,16 @@ public class FutureConverter {
         }
 
         @Override
-        public void addListener(final Runnable listener, final Executor executor) {
+        public void addListener(final Runnable command, final Executor executor) {
             getWrappedFuture().addCallback(new ListenableFutureCallback<T>() {
                 @Override
                 public void onSuccess(T result) {
-                    executor.execute(listener);
+                    executor.execute(command);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    executor.execute(listener);
+                    executor.execute(command);
                 }
             });
         }
