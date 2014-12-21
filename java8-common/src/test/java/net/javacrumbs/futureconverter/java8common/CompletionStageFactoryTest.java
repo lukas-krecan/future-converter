@@ -7,10 +7,12 @@ import org.junit.Test;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.mockito.Matchers.isA;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -33,7 +35,7 @@ public class CompletionStageFactoryTest {
     }
 
     @Test
-    public void exceptionallyShouldWorkAndPassValueDownstream() {
+    public void exceptionallyShouldTranslateExceptionToAValue() {
         ListenableFuture<String> listenableFuture = Futures.immediateFailedFuture(EXCEPTION);
 
         CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
@@ -43,6 +45,20 @@ public class CompletionStageFactoryTest {
         when(function.apply(EXCEPTION)).thenReturn(VALUE);
         completionStage.exceptionally(function).thenAccept(consumer);
         verify(function).apply(EXCEPTION);
+        verify(consumer).accept(VALUE);
+    }
+
+    @Test
+    public void exceptionallyShouldPassValue() {
+        ListenableFuture<String> listenableFuture = Futures.immediateFuture(VALUE);
+
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        Consumer<String> consumer = mock(Consumer.class);
+        Function<Throwable, String> function = mock(Function.class);
+        when(function.apply(EXCEPTION)).thenReturn(VALUE);
+        completionStage.exceptionally(function).thenAccept(consumer);
+        verifyZeroInteractions(function);
         verify(consumer).accept(VALUE);
     }
 
@@ -68,6 +84,28 @@ public class CompletionStageFactoryTest {
         completionStage.thenApply(String::length).thenApply(i -> i * 2).thenAccept(consumer).exceptionally(errorFunction);
         verifyZeroInteractions(consumer);
         verify(errorFunction).apply(isA(CompletionException.class));
+    }
+
+    @Test
+    public void whenCompleteShouldAcceptValue() {
+        ListenableFuture<String> listenableFuture = Futures.immediateFuture(VALUE);
+
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        BiConsumer<Integer, Throwable> consumer = mock(BiConsumer.class);
+        completionStage.thenApply(String::length).thenApply(i -> i * 2).whenComplete(consumer);
+        verify(consumer).accept(8, null);
+    }
+
+    @Test
+    public void whenCompleteShouldAcceptException() {
+        ListenableFuture<String> listenableFuture = Futures.immediateFailedFuture(EXCEPTION);
+
+        CompletionStage<String> completionStage = createCompletionStage(listenableFuture);
+
+        BiConsumer<Integer, Throwable> consumer = mock(BiConsumer.class);
+        completionStage.thenApply(String::length).thenApply(i -> i * 2).whenComplete(consumer);
+        verify(consumer).accept((Integer) isNull(), isA(CompletionException.class));
     }
 
     private CompletionStage<String> createCompletionStage(ListenableFuture<String> listenableFuture) {
