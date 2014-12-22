@@ -17,7 +17,7 @@ package net.javacrumbs.futureconverter.java8common;
 
 import java.util.function.Consumer;
 
-public class DefaultListenable<T> implements Listenable<T> {
+class DefaultListenable<T> implements Listenable<T> {
     private final CallbackRegistry<T> successCallbackRegistry = new CallbackRegistry<>();
     private final CallbackRegistry<Throwable> failureCallbackRegistry = new CallbackRegistry<>();
 

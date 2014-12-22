@@ -19,6 +19,13 @@ public class UnfinishedCompletableFutureTest extends AbstractCompletionStageTest
         return completableFuture;
     }
 
+    @Override
+    protected CompletionStage<String> createOtherCompletionStage() {
+        CompletableFuture<String> completableFuture = new CompletableFuture<>();
+        completableFuture.complete(VALUE2);
+        return completableFuture;
+    }
+
     protected CompletionStage<String> createExceptionalCompletionStage() {
         return createCompletionStage();
     }

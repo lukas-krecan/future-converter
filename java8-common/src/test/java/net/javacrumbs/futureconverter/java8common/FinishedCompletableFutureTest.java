@@ -9,11 +9,17 @@ import java.util.concurrent.CompletionStage;
  * CompletionStage and CompletableFuture.
  */
 public class FinishedCompletableFutureTest extends AbstractCompletionStageTest {
-    private final CompletionStageFactory factory = new CompletionStageFactory();
 
     protected CompletionStage<String> createCompletionStage() {
         CompletableFuture<String> completableFuture = new CompletableFuture<>();
         completableFuture.complete(VALUE);
+        return completableFuture;
+    }
+
+    @Override
+    protected CompletionStage<String> createOtherCompletionStage() {
+        CompletableFuture<String> completableFuture = new CompletableFuture<>();
+        completableFuture.complete(VALUE2);
         return completableFuture;
     }
 

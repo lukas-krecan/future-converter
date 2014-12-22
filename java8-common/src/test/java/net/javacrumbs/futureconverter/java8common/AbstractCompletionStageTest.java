@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -19,9 +20,12 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractCompletionStageTest {
     protected static final String VALUE = "test";
+    protected static final String VALUE2 = "value2";
     protected static final RuntimeException EXCEPTION = new RuntimeException("Test");
 
     protected abstract CompletionStage<String> createCompletionStage();
+
+    protected abstract CompletionStage<String> createOtherCompletionStage();
 
     protected abstract CompletionStage<String> createExceptionalCompletionStage();
 
@@ -86,6 +90,41 @@ public abstract class AbstractCompletionStageTest {
         verify(errorHandler).apply(isA(CompletionException.class));
         verify(conversion).apply(VALUE);
     }
+
+    @Test
+    public void shouldCombineValues() {
+        CompletionStage<String> completionStage1 = createCompletionStage();
+        CompletionStage<String> completionStage2 = createOtherCompletionStage();
+
+        BiFunction<String, String, Integer> combiner = mock(BiFunction.class);
+        Consumer<Integer> consumer = mock(Consumer.class);
+
+        when(combiner.apply(VALUE, VALUE2)).thenReturn(5);
+
+        completionStage1.thenCombine(completionStage2, combiner).thenAccept(consumer);
+        finishCalculation();
+
+        verify(combiner).apply(VALUE, VALUE2);
+        verify(consumer).accept(5);
+    }
+
+    @Test
+    public void shouldCombineValuesInOppositeOrder() {
+        CompletionStage<String> completionStage1 = createOtherCompletionStage();
+        CompletionStage<String> completionStage2 = createCompletionStage();
+
+        BiFunction<String, String, Integer> combiner = mock(BiFunction.class);
+        Consumer<Integer> consumer = mock(Consumer.class);
+
+        when(combiner.apply(VALUE2, VALUE)).thenReturn(5);
+
+        completionStage1.thenCombine(completionStage2, combiner).thenAccept(consumer);
+        finishCalculation();
+
+        verify(combiner).apply(VALUE2, VALUE);
+        verify(consumer).accept(5);
+    }
+
 
     @Test
     public void exceptionFromThenAcceptShouldBePassedToTheNextPhase() {

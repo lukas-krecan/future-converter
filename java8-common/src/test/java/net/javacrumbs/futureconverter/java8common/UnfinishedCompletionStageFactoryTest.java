@@ -10,6 +10,13 @@ public class UnfinishedCompletionStageFactoryTest extends AbstractCompletionStag
         return factory.createCompletableFuture(defaultListenable);
     }
 
+    @Override
+    protected CompletionStage<String> createOtherCompletionStage() {
+        return factory.createCompletableFuture((onSuccess, onFailure) -> {
+            onSuccess.accept(VALUE2);
+        });
+    }
+
     protected CompletionStage<String> createExceptionalCompletionStage() {
         return createCompletionStage();
     }
