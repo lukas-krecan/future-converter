@@ -25,25 +25,20 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 class SimpleCompletionStage<T> implements CompletionStage<T> {
-    private final CallbackRegistry<T> successCallbackRegistry = new CallbackRegistry<>();
-    private final CallbackRegistry<Throwable> failureCallbackRegistry = new CallbackRegistry<>();
-
-    public SimpleCompletionStage() {
-
-    }
+    private final DefaultListenable<T> defaultListenable = new DefaultListenable<>();
 
     public void success(T result) {
-        successCallbackRegistry.done(result);
+        defaultListenable.success(result);
     }
 
     public void failure(Throwable e) {
-        failureCallbackRegistry.done(e);
+        defaultListenable.failure(e);
     }
 
     @Override
     public <U> CompletionStage<U> thenApply(Function<? super T, ? extends U> fn) {
         SimpleCompletionStage<U> newCompletionStage = new SimpleCompletionStage<>();
-        successCallbackRegistry.addCallback(result -> {
+        defaultListenable.addSuccessCallback(result -> {
             try {
                 newCompletionStage.success(fn.apply(result));
             } catch (Throwable e) {
@@ -67,7 +62,7 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public CompletionStage<Void> thenAccept(Consumer<? super T> action) {
         SimpleCompletionStage<Void> newCompletionStage = newSimpleCompletionStage();
-        successCallbackRegistry.addCallback(result -> {
+        defaultListenable.addSuccessCallback(result -> {
             try {
                 action.accept(result);
                 newCompletionStage.success(null);
@@ -212,19 +207,19 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public CompletionStage<T> exceptionally(Function<Throwable, ? extends T> fn) {
         SimpleCompletionStage<T> newCompletionStage = newSimpleCompletionStage();
-        successCallbackRegistry.addCallback(newCompletionStage::success);
-        failureCallbackRegistry.addCallback(t -> newCompletionStage.success(fn.apply(t)));
+        defaultListenable.addSuccessCallback(newCompletionStage::success);
+        defaultListenable.addFailureCallback(t -> newCompletionStage.success(fn.apply(t)));
         return newCompletionStage;
     }
 
     @Override
     public CompletionStage<T> whenComplete(BiConsumer<? super T, ? super Throwable> action) {
         SimpleCompletionStage<T> newCompletionStage = newSimpleCompletionStage();
-        successCallbackRegistry.addCallback(result -> {
+        defaultListenable.addSuccessCallback(result -> {
             action.accept(result, null);
             newCompletionStage.success(result);
         });
-        failureCallbackRegistry.addCallback(e -> {
+        defaultListenable.addFailureCallback(e -> {
             action.accept(null, e);
             newCompletionStage.failure(wrapException(e));
         });
@@ -262,7 +257,7 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     }
 
     private void addStandardFailureCallback(Consumer<Throwable> onError) {
-        failureCallbackRegistry.addCallback(t -> onError.accept(wrapException(t)));
+        defaultListenable.addFailureCallback(t -> onError.accept(wrapException(t)));
     }
 
     private final Throwable wrapException(Throwable e) {

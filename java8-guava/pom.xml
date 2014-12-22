@@ -18,10 +18,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        <dependency>
             <groupId>net.javacrumbs.future-converter</groupId>
             <artifactId>future-converter-common-test</artifactId>
         </dependency>
