@@ -4,19 +4,26 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-public class CompletionStageFactoryTest extends AbstractCompletionStageTest {
+/**
+ * Tests CompletableFuture. Just to be sure I am reading the spec correctly. Same tests are executed on
+ * CompletionStage and CompletableFuture.
+ */
+public class CompletableFutureTest extends AbstractCompletionStageTest {
     private final CompletionStageFactory factory = new CompletionStageFactory();
 
     protected CompletionStage<String> createFinishedCompletionStage() {
-        ListenableFuture<String> listenableFuture = Futures.immediateFuture(VALUE);
-        return createCompletionStage(listenableFuture);
+        CompletableFuture<String> completableFuture = new CompletableFuture<>();
+        completableFuture.complete(VALUE);
+        return completableFuture;
     }
 
     protected CompletionStage<String> createExceptionalCompletionStage() {
-        ListenableFuture<String> listenableFuture = Futures.immediateFailedFuture(EXCEPTION);
-        return createCompletionStage(listenableFuture);
+        CompletableFuture<String> completableFuture = new CompletableFuture<>();
+        completableFuture.completeExceptionally(EXCEPTION);
+        return completableFuture;
     }
 
 

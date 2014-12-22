@@ -36,7 +36,13 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public <U> CompletionStage<U> thenApply(Function<? super T, ? extends U> fn) {
         return newSimpleCompletionStage((onSuccess, onError) -> {
-            successCallbackRegistry.addCallback(result -> onSuccess.accept(fn.apply(result)));
+            successCallbackRegistry.addCallback(result -> {
+                try {
+                    onSuccess.accept(fn.apply(result));
+                } catch (Throwable e) {
+                    onError.accept(wrapException(e));
+                }
+            });
             addStandardFailureCallback(onError);
         });
     }
@@ -55,7 +61,11 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     public CompletionStage<Void> thenAccept(Consumer<? super T> action) {
         return newSimpleCompletionStage((onSuccess, onError) -> {
             successCallbackRegistry.addCallback(result -> {
-                action.accept(result);
+                try {
+                    action.accept(result);
+                } catch(Throwable e) {
+                    onError.accept(wrapException(e));
+                }
                 onSuccess.accept(null);
             });
             addStandardFailureCallback(onError);
