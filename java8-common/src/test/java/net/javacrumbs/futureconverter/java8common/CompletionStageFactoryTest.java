@@ -14,6 +14,7 @@ import java.util.function.Function;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -44,7 +45,7 @@ public class CompletionStageFactoryTest {
         Function<Throwable, String> function = mock(Function.class);
         when(function.apply(EXCEPTION)).thenReturn(VALUE);
         completionStage.exceptionally(function).thenAccept(consumer);
-        verify(function).apply(EXCEPTION);
+        verify(function, times(1)).apply(EXCEPTION);
         verify(consumer).accept(VALUE);
     }
 
@@ -83,7 +84,7 @@ public class CompletionStageFactoryTest {
         Function<Throwable, Void> errorFunction = mock(Function.class);
         completionStage.thenApply(String::length).thenApply(i -> i * 2).thenAccept(consumer).exceptionally(errorFunction);
         verifyZeroInteractions(consumer);
-        verify(errorFunction).apply(isA(CompletionException.class));
+        verify(errorFunction, times(1)).apply(isA(CompletionException.class));
     }
 
     @Test

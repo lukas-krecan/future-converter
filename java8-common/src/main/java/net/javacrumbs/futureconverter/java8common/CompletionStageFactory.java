@@ -18,7 +18,7 @@ package net.javacrumbs.futureconverter.java8common;
 import java.util.concurrent.CompletionStage;
 
 public class CompletionStageFactory {
-    public <T> CompletionStage<T> createCompletableFuture(CompletionStageCallback<T> callback) {
+    public <T> CompletionStage<T> createCompletableFuture(Listenable<T> callback) {
         return new SimpleCompletionStage<T>(callback);
     }
 }

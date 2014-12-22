@@ -28,8 +28,9 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     private final CallbackRegistry<T> successCallbackRegistry = new CallbackRegistry<>();
     private final CallbackRegistry<Throwable> failureCallbackRegistry = new CallbackRegistry<>();
 
-    public SimpleCompletionStage(CompletionStageCallback<T> callback) {
-        callback.register(successCallbackRegistry::done, failureCallbackRegistry::done);
+    public SimpleCompletionStage(Listenable<T> callback) {
+        // causes call of the transformation functions if the result is ready
+        callback.addCallbacks(successCallbackRegistry::done, failureCallbackRegistry::done);
     }
 
     @Override
@@ -255,7 +256,7 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
         }
     }
 
-    private <R> SimpleCompletionStage<R> newSimpleCompletionStage(CompletionStageCallback<R> callback) {
+    private <R> SimpleCompletionStage<R> newSimpleCompletionStage(Listenable<R> callback) {
         return new SimpleCompletionStage<>(callback);
     }
 }
