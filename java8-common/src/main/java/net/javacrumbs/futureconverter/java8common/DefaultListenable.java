@@ -22,8 +22,8 @@ class DefaultListenable<T> implements Listenable<T> {
 
     @Override
     public void addCallbacks(Consumer<? super T> onSuccess, Consumer<Throwable> onFailure) {
-        callbackRegistry.addSuccessCallback(onSuccess);
-        callbackRegistry.addFailureCallback(onFailure);
+        callbackRegistry.addSuccessCallback(onSuccess, SimpleCompletionStage.SAME_THREAD_EXECUTOR);
+        callbackRegistry.addFailureCallback(onFailure, SimpleCompletionStage.SAME_THREAD_EXECUTOR);
     }
 
 

@@ -18,6 +18,7 @@ package net.javacrumbs.futureconverter.java8common;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
@@ -28,8 +29,8 @@ import java.util.function.Consumer;
  */
 class ListenableCallbackRegistry<T> {
 
-	private final Queue<Consumer<? super T>> successCallbacks = new LinkedList<>();
-	private final Queue<Consumer<Throwable>> failureCallbacks = new LinkedList<>();
+	private final Queue<CallbackExecutorPair<? super T>> successCallbacks = new LinkedList<>();
+	private final Queue<CallbackExecutorPair<Throwable>> failureCallbacks = new LinkedList<>();
 
 	private State state = State.NEW;
 
@@ -40,20 +41,30 @@ class ListenableCallbackRegistry<T> {
 	private final Object mutex = new Object();
 
 
-	/**
+	private <S> void callCallback(Consumer<S> callback, S value, Executor executor) {
+		executor.execute(() -> callback.accept(value));
+	}
+
+	private <S> void callCallback(CallbackExecutorPair<S> callbackExecutorPair, S result) {
+		callCallback(callbackExecutorPair.getCallback(), result, callbackExecutorPair.getExecutor());
+	}
+
+
+    /**
 	 * Adds the given callback to this registry.
 	 * @param callback the callback to add
 	 */
-	public void addSuccessCallback(Consumer<? super T> callback) {
+	public void addSuccessCallback(Consumer<? super T> callback, Executor executor) {
 		Objects.requireNonNull(callback, "'callback' must not be null");
+		Objects.requireNonNull(executor, "'executor' must not be null");
 
 		synchronized (mutex) {
 			switch (state) {
 				case NEW:
-                    successCallbacks.add(callback);
+                    successCallbacks.add(new CallbackExecutorPair<>(callback, executor));
 					break;
 				case SUCCESS:
-					callback.accept(result);
+					callCallback(callback, result, executor);
 					break;
 				case FAILURE:
                     // do nothing
@@ -62,23 +73,24 @@ class ListenableCallbackRegistry<T> {
 		}
 	}
 
-    /**
+	/**
    	 * Adds the given callback to this registry.
    	 * @param callback the callback to add
    	 */
-   	public void addFailureCallback(Consumer<Throwable> callback) {
+   	public void addFailureCallback(Consumer<Throwable> callback, Executor executor) {
    		Objects.requireNonNull(callback, "'callback' must not be null");
+   		Objects.requireNonNull(executor, "'executor' must not be null");
 
    		synchronized (mutex) {
    			switch (state) {
    				case NEW:
-                       failureCallbacks.add(callback);
+                       failureCallbacks.add(new CallbackExecutorPair<>(callback, executor));
    					break;
    				case SUCCESS:
                     // do nothing
    					break;
    				case FAILURE:
-                    callback.accept(failure);
+					callCallback(callback, failure, executor);
    					break;
    			}
    		}
@@ -90,7 +102,7 @@ class ListenableCallbackRegistry<T> {
 			this.result = result;
 
 			while (!successCallbacks.isEmpty()) {
-                successCallbacks.poll().accept(result);
+				callCallback(successCallbacks.poll(), result);
 			}
             failureCallbacks.clear();
 		}
@@ -102,12 +114,30 @@ class ListenableCallbackRegistry<T> {
 			this.failure = t;
 
 			while (!failureCallbacks.isEmpty()) {
-                failureCallbacks.poll().accept(t);
+				callCallback(failureCallbacks.poll(), failure);
 			}
             successCallbacks.clear();
 		}
 	}
 
 	private enum State {NEW, SUCCESS, FAILURE}
+
+	private static class CallbackExecutorPair<S> {
+		private final Consumer<S> callback;
+		private final Executor executor;
+
+		private CallbackExecutorPair(Consumer<S> callback, Executor executor) {
+			this.callback = callback;
+			this.executor = executor;
+		}
+
+		public Consumer<S> getCallback() {
+			return callback;
+		}
+
+		public Executor getExecutor() {
+			return executor;
+		}
+	}
 
 }

@@ -1,14 +1,22 @@
 package net.javacrumbs.futureconverter.java8common;
 
+import com.sun.istack.internal.NotNull;
 import org.junit.Test;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.Thread.currentThread;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doThrow;
@@ -22,6 +30,7 @@ public abstract class AbstractCompletionStageTest {
     protected static final String VALUE = "test";
     protected static final String VALUE2 = "value2";
     protected static final RuntimeException EXCEPTION = new RuntimeException("Test");
+    public static final String IN_EXECUTOR_THREAD_NAME = "in executor";
 
     protected abstract CompletionStage<String> createCompletionStage();
 
@@ -43,6 +52,53 @@ public abstract class AbstractCompletionStageTest {
         finishCalculation();
 
         verify(consumer).accept(VALUE);
+    }
+
+    @Test
+    public void acceptAsyncShouldBeCalledUsingExecutor() throws InterruptedException {
+        CompletionStage<String> completionStage = createCompletionStage();
+
+        CountDownLatch waitLatch = new CountDownLatch(1);
+
+        Executor executor = new ThreadNamingExecutor();
+        completionStage.thenAcceptAsync(r -> {
+            assertEquals(IN_EXECUTOR_THREAD_NAME, currentThread().getName());
+            waitLatch.countDown();
+        }, executor).exceptionally(e -> {
+            fail(e.getMessage());
+            return null;
+        });
+
+        finishCalculation();
+
+        waitLatch.await();
+    }
+
+    @Test
+    public void followingStagesShouldBeCalledInTeSameThread() throws InterruptedException {
+        CompletionStage<String> completionStage = createCompletionStage();
+
+        CountDownLatch waitLatch = new CountDownLatch(1);
+
+        Executor executor = new ThreadNamingExecutor();
+        completionStage
+                .thenApplyAsync(r -> {
+                    assertEquals(IN_EXECUTOR_THREAD_NAME, currentThread().getName());
+                    return "a";
+                }, executor)
+                .thenAccept(r -> {
+                    assertEquals(IN_EXECUTOR_THREAD_NAME, currentThread().getName());
+                    assertEquals("a", r);
+                    waitLatch.countDown();
+                })
+                .exceptionally(e -> {
+                    fail(e.getMessage());
+                    return null;
+                });
+
+        finishCalculation();
+
+        waitLatch.await();
     }
 
     @Test
@@ -190,5 +246,17 @@ public abstract class AbstractCompletionStageTest {
         finishCalculationExceptionally();
 
         verify(consumer).accept((Integer) isNull(), isA(CompletionException.class));
+    }
+
+    /**
+     * Names thread
+     */
+    private class ThreadNamingExecutor implements Executor {
+        @Override
+        public void execute(Runnable command) {
+            Thread thread = new Thread(command);
+            thread.setName(IN_EXECUTOR_THREAD_NAME);
+            thread.start();
+        }
     }
 }
