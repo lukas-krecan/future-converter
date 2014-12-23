@@ -51,50 +51,28 @@ class ListenableCallbackRegistry<T> {
 
 
     /**
-	 * Adds the given callback to this registry.
-	 * @param callback the callback to add
+	 * Adds the given callbacks to this registry.
 	 */
-	public void addSuccessCallback(Consumer<? super T> callback, Executor executor) {
-		Objects.requireNonNull(callback, "'callback' must not be null");
+	public void addCallbacks(Consumer<? super T> successCallback, Consumer<Throwable> failureCallback, Executor executor) {
+		Objects.requireNonNull(successCallback, "'successCallback' must not be null");
+		Objects.requireNonNull(failureCallback, "'failureCallback' must not be null");
 		Objects.requireNonNull(executor, "'executor' must not be null");
 
 		synchronized (mutex) {
 			switch (state) {
 				case NEW:
-                    successCallbacks.add(new CallbackExecutorPair<>(callback, executor));
+                    successCallbacks.add(new CallbackExecutorPair<>(successCallback, executor));
+                    failureCallbacks.add(new CallbackExecutorPair<>(failureCallback, executor));
 					break;
 				case SUCCESS:
-					callCallback(callback, result, executor);
+					callCallback(successCallback, result, executor);
 					break;
 				case FAILURE:
-                    // do nothing
+					callCallback(failureCallback, failure, executor);
 					break;
 			}
 		}
 	}
-
-	/**
-   	 * Adds the given callback to this registry.
-   	 * @param callback the callback to add
-   	 */
-   	public void addFailureCallback(Consumer<Throwable> callback, Executor executor) {
-   		Objects.requireNonNull(callback, "'callback' must not be null");
-   		Objects.requireNonNull(executor, "'executor' must not be null");
-
-   		synchronized (mutex) {
-   			switch (state) {
-   				case NEW:
-                       failureCallbacks.add(new CallbackExecutorPair<>(callback, executor));
-   					break;
-   				case SUCCESS:
-                    // do nothing
-   					break;
-   				case FAILURE:
-					callCallback(callback, failure, executor);
-   					break;
-   			}
-   		}
-   	}
 
 	public void success(T result) {
 		synchronized (mutex) {

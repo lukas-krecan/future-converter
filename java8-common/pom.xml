@@ -22,10 +22,12 @@
             <artifactId>future-converter-common-test</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <scope>test</scope>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>1.7.0</version>
         </dependency>
+
+
     </dependencies>
 
     <build>

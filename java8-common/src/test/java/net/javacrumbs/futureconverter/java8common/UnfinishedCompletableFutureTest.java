@@ -1,9 +1,5 @@
 package net.javacrumbs.futureconverter.java8common;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -39,22 +35,4 @@ public class UnfinishedCompletableFutureTest extends AbstractCompletionStageTest
     protected void finishCalculationExceptionally() {
         completableFuture.completeExceptionally(EXCEPTION);
     }
-
-
-    private CompletionStage<String> createCompletionStage(ListenableFuture<String> listenableFuture) {
-        return factory.createCompletableFuture((onSuccess, onError) -> {
-            Futures.addCallback(listenableFuture, new FutureCallback<String>() {
-                @Override
-                public void onSuccess(String result) {
-                    onSuccess.accept(result);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    onError.accept(t);
-                }
-            });
-        });
-    }
-
 }

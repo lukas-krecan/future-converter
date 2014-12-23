@@ -50,14 +50,16 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public <U> CompletionStage<U> thenApplyAsync(Function<? super T, ? extends U> fn, Executor executor) {
         SimpleCompletionStage<U> newCompletionStage = newSimpleCompletionStage();
-        callbackRegistry.addSuccessCallback(result -> {
-            try {
-                newCompletionStage.success(fn.apply(result));
-            } catch (Throwable e) {
-                newCompletionStage.failure(wrapException(e));
-            }
-        }, executor);
-        addStandardFailureCallback(newCompletionStage::failure, executor);
+        callbackRegistry.addCallbacks(
+                result -> {
+                    try {
+                        newCompletionStage.success(fn.apply(result));
+                    } catch (Throwable e) {
+                        newCompletionStage.failure(wrapException(e));
+                    }
+                }, standardFailureCallback(newCompletionStage),
+                executor
+        );
         return newCompletionStage;
     }
 
@@ -74,17 +76,21 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public CompletionStage<Void> thenAcceptAsync(Consumer<? super T> action, Executor executor) {
         SimpleCompletionStage<Void> newCompletionStage = newSimpleCompletionStage();
-        callbackRegistry.addSuccessCallback(result -> {
-            try {
-                action.accept(result);
-                newCompletionStage.success(null);
-            } catch (Throwable e) {
-                newCompletionStage.failure(wrapException(e));
-            }
-        }, executor);
-        addStandardFailureCallback(newCompletionStage::failure, executor);
+        callbackRegistry.addCallbacks(
+                result -> {
+                    try {
+                        action.accept(result);
+                        newCompletionStage.success(null);
+                    } catch (Throwable e) {
+                        newCompletionStage.failure(wrapException(e));
+                    }
+                },
+                standardFailureCallback(newCompletionStage),
+                executor
+        );
         return newCompletionStage;
     }
+
 
     @Override
     public CompletionStage<Void> thenRun(Runnable action) {
@@ -114,14 +120,16 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public <U, V> CompletionStage<V> thenCombineAsync(CompletionStage<? extends U> other, BiFunction<? super T, ? super U, ? extends V> fn, Executor executor) {
         SimpleCompletionStage<V> newCompletionStage = newSimpleCompletionStage();
-        callbackRegistry.addSuccessCallback(result1 -> {
-            try {
-                other.thenAccept(result2 -> newCompletionStage.success(fn.apply(result1, result2)));
-            } catch (Throwable e) {
-                newCompletionStage.failure(wrapException(e));
-            }
-        }, executor);
-        addStandardFailureCallback(newCompletionStage::failure, executor);
+        callbackRegistry.addCallbacks(
+                result1 -> {
+                    try {
+                        other.thenAccept(result2 -> newCompletionStage.success(fn.apply(result1, result2)));
+                    } catch (Throwable e) {
+                        newCompletionStage.failure(wrapException(e));
+                    }
+                }, standardFailureCallback(newCompletionStage),
+                executor
+        );
         return newCompletionStage;
     }
 
@@ -218,8 +226,11 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public CompletionStage<T> exceptionally(Function<Throwable, ? extends T> fn) {
         SimpleCompletionStage<T> newCompletionStage = newSimpleCompletionStage();
-        callbackRegistry.addSuccessCallback(newCompletionStage::success, SAME_THREAD_EXECUTOR);
-        callbackRegistry.addFailureCallback(t -> newCompletionStage.success(fn.apply(t)), SAME_THREAD_EXECUTOR);
+        callbackRegistry.addCallbacks(
+                newCompletionStage::success,
+                t -> newCompletionStage.success(fn.apply(t)),
+                SAME_THREAD_EXECUTOR
+        );
         return newCompletionStage;
     }
 
@@ -236,14 +247,16 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
     @Override
     public CompletionStage<T> whenCompleteAsync(BiConsumer<? super T, ? super Throwable> action, Executor executor) {
         SimpleCompletionStage<T> newCompletionStage = newSimpleCompletionStage();
-        callbackRegistry.addSuccessCallback(result -> {
-            action.accept(result, null);
-            newCompletionStage.success(result);
-        }, executor);
-        callbackRegistry.addFailureCallback(e -> {
-            action.accept(null, e);
-            newCompletionStage.failure(wrapException(e));
-        }, executor);
+        callbackRegistry.addCallbacks(
+                result -> {
+                    action.accept(result, null);
+                    newCompletionStage.success(result);
+                },
+                e -> {
+                    action.accept(null, e);
+                    newCompletionStage.failure(wrapException(e));
+                }, executor
+        );
         return newCompletionStage;
     }
 
@@ -267,8 +280,8 @@ class SimpleCompletionStage<T> implements CompletionStage<T> {
         return null;
     }
 
-    private void addStandardFailureCallback(Consumer<Throwable> onError, Executor executor) {
-        callbackRegistry.addFailureCallback(t -> onError.accept(wrapException(t)), executor);
+    private Consumer<Throwable> standardFailureCallback(SimpleCompletionStage<?> newCompletionStage) {
+        return t -> newCompletionStage.failure(wrapException(t));
     }
 
     private final Throwable wrapException(Throwable e) {

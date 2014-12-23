@@ -1,22 +1,21 @@
 package net.javacrumbs.futureconverter.java8common;
 
-import com.sun.istack.internal.NotNull;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.lang.Thread.currentThread;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doThrow;
@@ -26,6 +25,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+
+/**
+ * original test followingStagesShouldBeCalledInTeSameThread
+ * callback hell
+ * followingStagesShouldBeCalledInTeSameThread - can be executed in the main thread
+ */
 public abstract class AbstractCompletionStageTest {
     protected static final String VALUE = "test";
     protected static final String VALUE2 = "value2";
@@ -41,6 +46,8 @@ public abstract class AbstractCompletionStageTest {
     protected abstract void finishCalculation();
 
     protected abstract void finishCalculationExceptionally();
+
+    private final List<Throwable> failures = new CopyOnWriteArrayList<>();
 
     @Test
     public void acceptShouldWork() {
@@ -64,14 +71,12 @@ public abstract class AbstractCompletionStageTest {
         completionStage.thenAcceptAsync(r -> {
             assertEquals(IN_EXECUTOR_THREAD_NAME, currentThread().getName());
             waitLatch.countDown();
-        }, executor).exceptionally(e -> {
-            fail(e.getMessage());
-            return null;
-        });
+        }, executor).exceptionally(errorHandler(waitLatch));
 
         finishCalculation();
 
         waitLatch.await();
+        assertThat(failures).isEmpty();
     }
 
     @Test
@@ -87,18 +92,26 @@ public abstract class AbstractCompletionStageTest {
                     return "a";
                 }, executor)
                 .thenAccept(r -> {
-                    assertEquals(IN_EXECUTOR_THREAD_NAME, currentThread().getName());
+                    // In fact it can be executed even in main thread depending if the previous callback finished sooner than
+                    // thenAccept is called
+                    // assertEquals(IN_EXECUTOR_THREAD_NAME, currentThread().getName());
                     assertEquals("a", r);
                     waitLatch.countDown();
                 })
-                .exceptionally(e -> {
-                    fail(e.getMessage());
-                    return null;
-                });
+                .exceptionally(errorHandler(waitLatch));
 
         finishCalculation();
 
         waitLatch.await();
+        assertThat(failures).isEmpty();
+    }
+
+    private Function<Throwable, Void> errorHandler(CountDownLatch waitLatch) {
+        return e -> {
+            failures.add(e);
+            waitLatch.countDown();
+            return null;
+        };
     }
 
     @Test
