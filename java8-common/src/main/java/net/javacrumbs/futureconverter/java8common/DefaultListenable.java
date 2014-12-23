@@ -18,28 +18,20 @@ package net.javacrumbs.futureconverter.java8common;
 import java.util.function.Consumer;
 
 class DefaultListenable<T> implements Listenable<T> {
-    private final CallbackRegistry<T> successCallbackRegistry = new CallbackRegistry<>();
-    private final CallbackRegistry<Throwable> failureCallbackRegistry = new CallbackRegistry<>();
+    private final ListenableCallbackRegistry<T> callbackRegistry = new ListenableCallbackRegistry<>();
 
     @Override
     public void addCallbacks(Consumer<? super T> onSuccess, Consumer<Throwable> onFailure) {
-        addSuccessCallback(onSuccess);
-        addFailureCallback(onFailure);
+        callbackRegistry.addSuccessCallback(onSuccess);
+        callbackRegistry.addFailureCallback(onFailure);
     }
 
-    void addFailureCallback(Consumer<Throwable> onFailure) {
-        failureCallbackRegistry.addCallback(onFailure);
-    }
-
-    void addSuccessCallback(Consumer<? super T> onSuccess) {
-        successCallbackRegistry.addCallback(onSuccess);
-    }
 
     public void success(T result) {
-        successCallbackRegistry.done(result);
+        callbackRegistry.success(result);
     }
 
     public void failure(Throwable e) {
-        failureCallbackRegistry.done(e);
+        callbackRegistry.failure(e);
     }
 }
