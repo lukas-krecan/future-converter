@@ -81,6 +81,18 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
     }
 
     @Test
+    public void testMultipleValues() throws ExecutionException, InterruptedException {
+        Observable<String> observable = Observable.from(new String[]{VALUE, "value2"});
+        T future = toFuture(observable);
+        try {
+            future.get();
+            fail("Exception expected");
+        } catch (ExecutionException e) {
+            assertEquals(IllegalArgumentException.class, e.getCause().getClass());
+        }
+    }
+
+    @Test
     public void testRun() throws ExecutionException, InterruptedException {
         Observable<String> observable = createAsyncObservable();
         T future = toFuture(observable);

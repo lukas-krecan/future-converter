@@ -31,7 +31,7 @@ class ObservableListenableFuture<T> extends FutureWrapper<T> implements Listenab
     ObservableListenableFuture(Observable<T> observable) {
         super((Future<T>) SettableFuture.create());
         this.observable = observable;
-        observable.subscribe(new Action1<T>() {
+        observable.single().subscribe(new Action1<T>() {
             @Override
             public void call(T t) {
                 getWrappedFuture().set(t);

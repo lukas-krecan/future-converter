@@ -1,3 +1,6 @@
+## 0.2.1
+* RxJava - using observable.single() to take the first element
+
 ## 0.2.0
 * RxJava - Original Future is not canceled upon unsubscribe.
 * guava-rxjava added

@@ -28,7 +28,7 @@ class ObservableCompletableFuture<T> extends CompletableFuture<T> {
     private final Observable<T> observable;
 
     public ObservableCompletableFuture(Observable<T> observable) {
-        subscription = observable.take(1).subscribe(
+        subscription = observable.single().subscribe(
                 this::complete,
                 this::completeExceptionally
         );

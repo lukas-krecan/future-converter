@@ -238,7 +238,7 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         assertTrue(subscription.isUnsubscribed());
 
         originalFutureTestHelper.finishRunningFuture();
-        Thread.sleep(10); //do not know how to wait for something not to happen
+        Thread.sleep(10); //do not know how to wait for something to not happen
 
         verifyZeroInteractions(onNext);
         verifyZeroInteractions(onError);
