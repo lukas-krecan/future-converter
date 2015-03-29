@@ -24,7 +24,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-spring-rxjava</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </dependency>
 
 And then use
@@ -45,7 +45,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-spring-java8</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </dependency>
 
 And then use
@@ -65,7 +65,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-rxjava-java8</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </dependency>
 
 And then use
@@ -87,7 +87,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-spring-guava</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </dependency>
 
 And then use
@@ -111,7 +111,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-java8-guava</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </dependency>
 
 And then use
