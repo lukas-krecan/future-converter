@@ -27,6 +27,7 @@
         <module>spring-java8</module>
         <module>rxjava-java8</module>
         <module>spring-rxjava</module>
+        <module>guava-rxjava</module>
         <module>spring-guava</module>
         <module>java8-guava</module>
         <module>deprecated</module>

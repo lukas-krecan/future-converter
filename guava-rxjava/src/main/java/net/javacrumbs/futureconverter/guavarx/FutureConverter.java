@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.springrx;
+package net.javacrumbs.futureconverter.guavarx;
 
-import org.springframework.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import rx.Observable;
 
 public class FutureConverter {
 
     /**
-     * Converts {@link org.springframework.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
-     * The original future is NOT canceled upon unsubscribe.* The original future is NOT canceled upon unsubscribe.
+     * Converts {@link com.google.common.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
+     * The original future is NOT canceled upon unsubscribe.
+     *
      * @param listenableFuture
      * @param <T>
      * @return
@@ -37,7 +38,7 @@ public class FutureConverter {
     }
 
     /**
-     * Converts  {@link rx.Observable} to {@link org.springframework.util.concurrent.ListenableFuture}.
+     * Converts  {@link rx.Observable} to {@link com.google.common.util.concurrent.ListenableFuture}.
      * Modifies the original Observable and takes only the first value.
      *
      * @param observable

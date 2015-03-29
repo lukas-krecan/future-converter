@@ -42,6 +42,7 @@ public class FutureConverter {
 
     /**
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Observable}.
+     * The original future is NOT canceled upon unsubscribe.
      *
      * @param completableFuture
      * @param <T>

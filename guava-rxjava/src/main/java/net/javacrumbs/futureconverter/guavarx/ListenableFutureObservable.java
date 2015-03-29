@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.springrx;
+package net.javacrumbs.futureconverter.guavarx;
 
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import rx.Observable;
 import rx.Subscriber;
 
 /**
- * Wraps  {@link org.springframework.util.concurrent.ListenableFuture} as {@link rx.Observable}.
- * The  original future is NOT canceled upon unsubscribe.
+ * Wraps  {@link com.google.common.util.concurrent.ListenableFuture} as {@link rx.Observable}.
+ * The original future is NOT canceled upon unsubscribe.
  *
  * @param <T>
  */
@@ -38,19 +39,18 @@ class ListenableFutureObservable<T> extends Observable<T> {
         return new Observable.OnSubscribe<T>() {
             @Override
             public void call(final Subscriber<? super T> subscriber) {
-                listenableFuture.addCallback(new ListenableFutureCallback<T>() {
+                Futures.addCallback(listenableFuture, new FutureCallback<T>() {
                     @Override
-                    public void onSuccess(T t) {
+                    public void onSuccess(T result) {
                         if (!subscriber.isUnsubscribed()) {
-                            subscriber.onNext(t);
+                            subscriber.onNext(result);
                             subscriber.onCompleted();
                         }
                     }
-
                     @Override
-                    public void onFailure(Throwable throwable) {
+                    public void onFailure(Throwable t) {
                         if (!subscriber.isUnsubscribed()) {
-                            subscriber.onError(throwable);
+                            subscriber.onError(t);
                         }
                     }
                 });
