@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.javacrumbs.future-converter</groupId>
@@ -20,6 +21,10 @@
             <email>lukas@krecan.net</email>
         </developer>
     </developers>
+
+    <properties>
+        <targetSdk>1.7</targetSdk>
+    </properties>
 
     <modules>
         <module>common</module>
@@ -156,6 +161,13 @@
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.4</version>
             </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${targetSdk}</source>
+                    <target>${targetSdk}</target>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
@@ -164,6 +176,27 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                    <version>1.13</version>
+                    <executions>
+                        <execution>
+                            <id>sniff</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <signature>
+                            <groupId>org.codehaus.mojo.signature</groupId>
+                            <artifactId>java17</artifactId>
+                            <version>1.0</version>
+                        </signature>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
