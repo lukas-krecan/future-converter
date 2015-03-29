@@ -35,7 +35,7 @@ public abstract class AbstractConverterHelperBasedTest<F extends Future<String>,
 
     @Override
     protected F createFinishedOriginal() {
-        return originalFutureTestHelper.createFinishedOriginal();
+        return originalFutureTestHelper.createFinishedFuture();
     }
 
     @Override
@@ -50,7 +50,7 @@ public abstract class AbstractConverterHelperBasedTest<F extends Future<String>,
 
     @Override
     protected void finishOriginalFuture() {
-        originalFutureTestHelper.finishOriginalFuture();
+        originalFutureTestHelper.finishRunningFuture();
     }
 
     @Override

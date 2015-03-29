@@ -31,9 +31,9 @@ class ObservableListenableFuture<T> implements ListenableFuture<T> {
     private final Future<T> futureFromObservable;
     private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
 
-    ObservableListenableFuture(Observable<T> wrapped) {
-        this.observable = wrapped.asObservable();
-        this.futureFromObservable = wrapped
+    ObservableListenableFuture(Observable<T> observable) {
+        this.observable = observable;
+        this.futureFromObservable = observable
                 .doOnNext(new Action1<T>() {
                     @Override
                     public void call(T t) {

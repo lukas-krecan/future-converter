@@ -24,7 +24,7 @@ public class CommonOriginalFutureTestHelper {
         waitLatch.await();
     }
 
-    public void finishOriginalFuture() {
+    public void finishRunningFuture() {
         waitLatch.countDown();
     }
 }

@@ -15,174 +15,24 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
-import org.junit.After;
-import org.junit.Test;
+import net.javacrumbs.futureconverter.common.test.rxjava.AbstractObservableToFutureConverterTest;
+import net.javacrumbs.futureconverter.common.test.spring.SpringConvertedFutureTestHelper;
 import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 import rx.Observable;
-import rx.Subscriber;
-import rx.subscriptions.Subscriptions;
 
-import java.io.IOException;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+public class ToListenableFutureConverterTest extends AbstractObservableToFutureConverterTest<ListenableFuture<String>> {
 
-import static net.javacrumbs.futureconverter.springrx.FutureConverter.toListenableFuture;
-import static net.javacrumbs.futureconverter.springrx.FutureConverter.toObservable;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
-public class ToListenableFutureConverterTest {
-
-    public static final String VALUE = "test";
-
-    private final CountDownLatch waitLatch = new CountDownLatch(1);
-
-    private final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
-
-    private AtomicReference<Future<?>> futureTaskRef = new AtomicReference<>();
-
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-    private AtomicInteger subscribed = new AtomicInteger(0);
-
-    @After
-    public void shutdown() {
-        executorService.shutdown();
+    public ToListenableFutureConverterTest() {
+        super(new SpringConvertedFutureTestHelper());
     }
 
-    @Test
-    public void testConvertToObservableCompleted() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(new String[]{VALUE});
-
-        ListenableFuture<String> listenable = toListenableFuture(observable);
-        listenable.addCallback(callback);
-
-        verify(callback).onSuccess(VALUE);
-        assertEquals(VALUE, listenable.get());
-        assertEquals(true, listenable.isDone());
-
-        assertNotNull(toObservable(listenable));
+    @Override
+    protected ListenableFuture<String> toFuture(Observable<String> observable) {
+        return FutureConverter.toListenableFuture(observable);
     }
 
-    @Test
-    public void testRun() throws ExecutionException, InterruptedException {
-        Observable<String> observable = createAsyncObservable();
-
-        ListenableFuture<String> listenable = toListenableFuture(observable);
-        listenable.addCallback(callback);
-        verifyZeroInteractions(callback);
-        assertEquals(false, listenable.isDone());
-        waitLatch.countDown();
-
-        assertEquals(VALUE, listenable.get());
-        verify(callback).onSuccess(VALUE);
-        assertEquals(true, listenable.isDone());
-        assertEquals(1, subscribed.get());
-    }
-
-
-    @Test
-    public void testCancelOriginal() throws ExecutionException, InterruptedException {
-        Observable<String> observable = createAsyncObservable();
-
-        ListenableFuture<String> listenable = toListenableFuture(observable);
-        listenable.addCallback(callback);
-
-
-        getFutureTask().cancel(true);
-
-        try {
-            listenable.get();
-        } catch (ExecutionException e) {
-            assertEquals(InterruptedException.class, e.getCause().getClass());
-        }
-        verify(callback).onFailure(any(InterruptedException.class));
-    }
-
-    @Test
-    public void testCancelOuter() throws ExecutionException, InterruptedException {
-        Observable<String> observable = createAsyncObservable();
-
-        ListenableFuture<String> listenable = toListenableFuture(observable);
-        listenable.addCallback(callback);
-
-        listenable.cancel(true);
-
-        try {
-            getFutureTask().get();
-        } catch (CancellationException e) {
-            //ok
-        }
-        assertTrue(getFutureTask().isCancelled());
-        assertTrue(listenable.isCancelled());
-    }
-
-    @Test
-    public void testConvertToCompletableException() throws ExecutionException, InterruptedException {
-        doTestException(new RuntimeException("test"));
-    }
-
-    @Test
-    public void testIOException() throws ExecutionException, InterruptedException {
-        doTestException(new IOException("test"));
-    }
-
-    private void doTestException(final Exception exception) throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.create(new Observable.OnSubscribe<String>() {
-            @Override
-            public void call(Subscriber<? super String> subscriber) {
-                subscriber.onError(exception);
-            }
-        });
-
-        ListenableFuture<String> listenableFuture = toListenableFuture(observable);
-        try {
-            listenableFuture.get();
-        } catch (ExecutionException e) {
-            assertSame(exception, e.getCause());
-        }
-    }
-
-
-    private Observable<String> createAsyncObservable() {
-        return Observable.create(new Observable.OnSubscribe<String>() {
-            @Override
-            public void call(final Subscriber<? super String> subscriber) {
-                subscribed.incrementAndGet();
-                Future<?> future = executorService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            System.out.println("Started");
-                            waitLatch.await();
-                            subscriber.onNext(VALUE);
-                            subscriber.onCompleted();
-                        } catch (InterruptedException e) {
-                            subscriber.onError(e);
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-                subscriber.add(Subscriptions.from(future));
-                assertTrue(futureTaskRef.compareAndSet(null, future));
-            }
-        });
-    }
-
-    private Future<?> getFutureTask() {
-        return futureTaskRef.get();
+    @Override
+    protected Observable<String> toObservable(ListenableFuture<String> future) {
+        return FutureConverter.toObservable(future);
     }
 }

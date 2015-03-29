@@ -30,7 +30,7 @@ public class GuavaOriginalFutureTestHelper extends CommonOriginalFutureTestHelpe
     private final ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
     @Override
-    public ListenableFuture<String> createFinishedOriginal() {
+    public ListenableFuture<String> createFinishedFuture() {
         return Futures.immediateFuture(AbstractConverterTest.VALUE);
     }
 

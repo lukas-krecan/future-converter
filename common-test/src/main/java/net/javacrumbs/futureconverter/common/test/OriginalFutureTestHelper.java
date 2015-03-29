@@ -20,11 +20,11 @@ import java.util.concurrent.Future;
 
 public interface OriginalFutureTestHelper<F extends Future<String>> {
 
-    F createFinishedOriginal();
+    F createFinishedFuture();
 
     F createRunningFuture();
 
     F createExceptionalFuture(Exception exception);
 
-    void finishOriginalFuture();
+    void finishRunningFuture();
 }

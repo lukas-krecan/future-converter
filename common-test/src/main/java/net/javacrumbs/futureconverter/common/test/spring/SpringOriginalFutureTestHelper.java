@@ -40,7 +40,7 @@ public class SpringOriginalFutureTestHelper extends CommonOriginalFutureTestHelp
     }
 
     @Override
-    public ListenableFuture<String> createFinishedOriginal() {
+    public ListenableFuture<String> createFinishedFuture() {
         return executor.submitListenable(
                 new Callable<String>() {
                     @Override

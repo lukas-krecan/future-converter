@@ -15,226 +15,24 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
-import org.junit.After;
-import org.junit.Test;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.util.concurrent.ListenableFutureTask;
+import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToObservableConverterTest;
+import net.javacrumbs.futureconverter.common.test.spring.SpringOriginalFutureTestHelper;
+import org.springframework.util.concurrent.ListenableFuture;
 import rx.Observable;
-import rx.Subscription;
-import rx.functions.Action0;
-import rx.functions.Action1;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+public class ToObservableConverterTest extends AbstractFutureToObservableConverterTest<ListenableFuture<String>> {
 
-import static net.javacrumbs.futureconverter.springrx.FutureConverter.toListenableFuture;
-import static net.javacrumbs.futureconverter.springrx.FutureConverter.toObservable;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-
-public class ToObservableConverterTest {
-
-    public static final String VALUE = "test";
-
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
-    private final CountDownLatch latch = new CountDownLatch(1);
-
-    private final CountDownLatch waitLatch = new CountDownLatch(1);
-
-    @After
-    public void shutdown() {
-        executorService.shutdown();
+    public ToObservableConverterTest() {
+        super(new SpringOriginalFutureTestHelper());
     }
 
-    @Test
-    public void testConvertToObservableCompleted() throws ExecutionException, InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return VALUE;
-            }
-        });
-        executorService.execute(listenable);
-
-        Observable<String> observable = toObservable(listenable);
-        Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
-        final Action0 onComplete = mock(Action0.class);
-
-        observable.subscribe(onNext, onError, new Action0() {
-            @Override
-            public void call() {
-                onComplete.call();
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-
-        verify(onNext).call(VALUE);
-        verifyZeroInteractions(onError);
-        verify(onComplete).call();
-
-        assertSame(listenable, toListenableFuture(observable));
+    @Override
+    protected Observable<String> toObservable(ListenableFuture<String> future) {
+        return FutureConverter.toObservable(future);
     }
 
-    @Test
-    public void testRun() throws ExecutionException, InterruptedException {
-
-        ListenableFutureTask<String> listenable = createAsyncListenableFuture();
-
-        Observable<String> observable = toObservable(listenable);
-        Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
-        final Action0 onComplete = mock(Action0.class);
-
-        observable.subscribe(onNext, onError, new Action0() {
-            @Override
-            public void call() {
-                onComplete.call();
-                latch.countDown();
-            }
-        });
-        verifyZeroInteractions(onNext);
-        verifyZeroInteractions(onError);
-        verifyZeroInteractions(onComplete);
-
-        waitLatch.countDown();
-        latch.await();
-
-        //wait for the result
-        verify(onNext).call(VALUE);
-        verifyZeroInteractions(onError);
-        verify(onComplete).call();
+    @Override
+    protected ListenableFuture<String> toFuture(Observable<String> observable) {
+        return FutureConverter.toListenableFuture(observable);
     }
-
-    private ListenableFutureTask<String> createAsyncListenableFuture() throws InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                waitLatch.await();
-                return VALUE;
-            }
-        });
-        executorService.execute(listenable);
-        return listenable;
-    }
-
-
-    @Test
-    public void testCancelOriginal() throws ExecutionException, InterruptedException {
-        ListenableFutureTask<String> listenable = createAsyncListenableFuture();
-
-        Observable<String> observable = toObservable(listenable);
-        Action1<String> onNext = mock(Action1.class);
-        final Action1<Throwable> onError = mock(Action1.class);
-        Action0 onComplete = mock(Action0.class);
-
-
-        observable.subscribe(
-                onNext,
-                new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable t) {
-                        onError.call(t);
-                        latch.countDown();
-                    }
-                }
-        );
-        listenable.cancel(true);
-
-        latch.await();
-
-        verify(onError).call(any(Throwable.class));
-        verifyZeroInteractions(onNext);
-        verifyZeroInteractions(onComplete);
-    }
-
-    @Test
-    public void testUnsubscribe() throws ExecutionException, InterruptedException {
-        ListenableFutureTask<String> listenable = createAsyncListenableFuture();
-
-        Observable<String> observable = toObservable(listenable);
-        Action1<String> onNext = mock(Action1.class);
-        Action1<Throwable> onError = mock(Action1.class);
-        Action0 onComplete = mock(Action0.class);
-
-        Subscription subscription = observable.subscribe(
-                onNext,
-                onError,
-                onComplete
-        );
-
-        subscription.unsubscribe();
-
-
-        listenable.addCallback(new ListenableFutureCallback<String>() {
-            @Override
-            public void onSuccess(String s) {
-                latch.countDown();
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-        assertTrue(listenable.isCancelled());
-    }
-
-
-    @Test
-    public void testConvertToCompletableException() throws ExecutionException, InterruptedException {
-        doTestException(new RuntimeException("test"));
-    }
-
-    @Test
-    public void testIOException() throws ExecutionException, InterruptedException {
-        doTestException(new IOException("test"));
-    }
-
-    private void doTestException(final Exception exception) throws InterruptedException {
-        ListenableFutureTask<String> listenable = new ListenableFutureTask<>(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                throw exception;
-            }
-        });
-        executorService.execute(listenable);
-
-        Observable<String> observable = toObservable(listenable);
-        Action1<String> onNext = mock(Action1.class);
-        final Action1<Throwable> onError = mock(Action1.class);
-        Action0 onComplete = mock(Action0.class);
-
-        observable.subscribe(
-                onNext,
-                new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable t) {
-                        onError.call(t);
-                        latch.countDown();
-                    }
-                },
-                onComplete
-        );
-        latch.await();
-
-        //wait for the result
-        verifyZeroInteractions(onNext);
-        verify(onError).call(exception);
-        verifyZeroInteractions(onComplete);
-    }
-
 }

@@ -20,6 +20,10 @@
             <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>
         </dependency>
+        <dependency>
+            <groupId>net.javacrumbs.future-converter</groupId>
+            <artifactId>future-converter-common-test</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

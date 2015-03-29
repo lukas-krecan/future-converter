@@ -35,19 +35,15 @@ class ObservableCompletableFuture<T> extends CompletableFuture<T> {
         this.observable = observable;
     }
 
+    public Observable<T> getObservable() {
+        return observable;
+    }
+
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         boolean result = super.cancel(mayInterruptIfRunning);
         subscription.unsubscribe();
         return result;
-    }
-
-    public Observable<T> getObservable() {
-        return observable;
-    }
-
-    public Subscription getSubscription() {
-        return subscription;
     }
 
     @Override

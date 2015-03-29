@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public class Java8OriginalFutureTestHelper extends CommonOriginalFutureTestHelper implements OriginalFutureTestHelper<CompletableFuture<String>> {
 
     @Override
-    public CompletableFuture<String> createFinishedOriginal() {
+    public CompletableFuture<String> createFinishedFuture() {
         return CompletableFuture.completedFuture(AbstractConverterTest.VALUE);
     }
 
