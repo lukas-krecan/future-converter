@@ -22,6 +22,7 @@ import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action0;
 import rx.functions.Action1;
+import rx.subscriptions.Subscriptions;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
@@ -112,6 +113,82 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
     }
 
     @Test
+    public void testMultipleSubscribers() throws ExecutionException, InterruptedException {
+        T future = originalFutureTestHelper.createRunningFuture();
+
+        Observable<String> observable = toObservable(future);
+        CountDownLatch latch = new CountDownLatch(2);
+
+        Action1<String> onNext1 = mockAction();
+        Action1<Throwable> onError1 = mockAction();
+        final Action0 onComplete1 = mock(Action0.class);
+
+        // first subscription
+        observable.subscribe(onNext1, onError1, () -> {
+            onComplete1.call();
+            latch.countDown();
+        });
+        verifyZeroInteractions(onNext1);
+        verifyZeroInteractions(onError1);
+        verifyZeroInteractions(onComplete1);
+
+        // second subscription
+        Action1<String> onNext2 = mockAction();
+        Action1<Throwable> onError2 = mockAction();
+        final Action0 onComplete2 = mock(Action0.class);
+
+        observable.subscribe(onNext2, onError2, () -> {
+            onComplete2.call();
+            latch.countDown();
+        });
+        verifyZeroInteractions(onNext2);
+        verifyZeroInteractions(onError2);
+        verifyZeroInteractions(onComplete2);
+
+
+        originalFutureTestHelper.finishRunningFuture();
+
+        //wait for the result
+        latch.await();
+
+        verify(onNext1).call(VALUE);
+        verifyZeroInteractions(onError1);
+        verify(onComplete1).call();
+
+        verify(onNext2).call(VALUE);
+        verifyZeroInteractions(onError2);
+        verify(onComplete2).call();
+    }
+
+    @Test
+    public void oneSubscriptionShouldNotCancelFuture() throws ExecutionException, InterruptedException {
+        T future = originalFutureTestHelper.createRunningFuture();
+
+        Observable<String> observable = toObservable(future);
+        Action1<String> onNext = mockAction();
+        Action1<Throwable> onError = mockAction();
+        final Action0 onComplete = mock(Action0.class);
+
+        observable.subscribe(onNext, onError, () -> {
+            onComplete.call();
+            latch.countDown();
+        });
+        verifyZeroInteractions(onNext);
+        verifyZeroInteractions(onError);
+        verifyZeroInteractions(onComplete);
+
+        observable.subscribe(v -> {}).unsubscribe();
+
+        originalFutureTestHelper.finishRunningFuture();
+        latch.await();
+
+        //wait for the result
+        verify(onNext).call(VALUE);
+        verifyZeroInteractions(onError);
+        verify(onComplete).call();
+    }
+
+    @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
@@ -158,15 +235,14 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         );
 
         subscription.unsubscribe();
+        assertTrue(subscription.isUnsubscribed());
 
-        try {
-            future.get();
-            fail("Exception expected");
-        } catch (CancellationException e) {
-            // ok
-        }
+        originalFutureTestHelper.finishRunningFuture();
+        Thread.sleep(10); //do not know how to wait for something not to happen
 
-        assertTrue(future.isCancelled());
+        verifyZeroInteractions(onNext);
+        verifyZeroInteractions(onError);
+        verifyZeroInteractions(onComplete);
     }
 
 

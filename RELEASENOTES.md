@@ -1,5 +1,5 @@
 ## 0.2.0
-*
+* RxJava - Original Future is not canceled upon unsubscribe.
 
 ## 0.1.0
 * Artifact IDs renamed

@@ -54,7 +54,7 @@
             <dependency>
                 <groupId>io.reactivex</groupId>
                 <artifactId>rxjava</artifactId>
-                <version>1.0.0-rc.7</version>
+                <version>1.0.8</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>

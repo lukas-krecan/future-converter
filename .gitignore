@@ -1,5 +1,4 @@
 *.class
-.idea
 # Package Files #
 *.jar
 *.war
@@ -8,3 +7,4 @@
 *.iml
 *.iws
 target
+.idea

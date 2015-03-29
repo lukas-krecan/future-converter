@@ -19,9 +19,11 @@ import rx.Observable;
 import rx.subscriptions.Subscriptions;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wraps  {@link CompletableFuture} as {@link rx.Observable}.
+ * The  original future is NOT canceled upon unsubscribe.
  *
  * @param <T>
  */
@@ -36,14 +38,16 @@ class CompletableFutureObservable<T> extends Observable<T> {
     private static <T> OnSubscribe<T> onSubscribe(final CompletableFuture<T> completableFuture) {
         return subscriber -> {
             completableFuture.thenAccept(value -> {
-                subscriber.onNext(value);
-                subscriber.onCompleted();
-            }).exceptionally(throwable -> {
-                subscriber.onError(throwable);
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onNext(value);
+                    subscriber.onCompleted();
+                }
+                }).exceptionally(throwable -> {
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onError(throwable);
+                }
                 return null;
             });
-            //listenable future is canceled upon unsubscribe
-            subscriber.add(Subscriptions.from(completableFuture));
         };
     }
 

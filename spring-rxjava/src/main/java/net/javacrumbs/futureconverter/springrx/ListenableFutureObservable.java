@@ -23,6 +23,7 @@ import rx.subscriptions.Subscriptions;
 
 /**
  * Wraps  {@link org.springframework.util.concurrent.ListenableFuture} as {@link rx.Observable}.
+ * The  original future is NOT canceled upon unsubscribe.
  *
  * @param <T>
  */
@@ -41,17 +42,19 @@ class ListenableFutureObservable<T> extends Observable<T> {
                 listenableFuture.addCallback(new ListenableFutureCallback<T>() {
                     @Override
                     public void onSuccess(T t) {
-                        subscriber.onNext(t);
-                        subscriber.onCompleted();
+                        if (!subscriber.isUnsubscribed()) {
+                            subscriber.onNext(t);
+                            subscriber.onCompleted();
+                        }
                     }
 
                     @Override
                     public void onFailure(Throwable throwable) {
-                        subscriber.onError(throwable);
+                        if (!subscriber.isUnsubscribed()) {
+                            subscriber.onError(throwable);
+                        }
                     }
                 });
-                //listenable future is canceled upon unsubscribe
-                subscriber.add(Subscriptions.from(listenableFuture));
             }
         };
     }
