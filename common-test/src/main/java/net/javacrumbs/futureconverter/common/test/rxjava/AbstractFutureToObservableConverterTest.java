@@ -22,9 +22,7 @@ import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action0;
 import rx.functions.Action1;
-import rx.subscriptions.Subscriptions;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +33,6 @@ import java.util.concurrent.Future;
 import static net.javacrumbs.futureconverter.common.test.AbstractConverterTest.VALUE;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -245,6 +242,18 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         verifyZeroInteractions(onComplete);
     }
 
+    @Test
+    public void shouldPropagateExceptionFromObserver() {
+        T future = originalFutureTestHelper.createFinishedFuture();
+
+        Observable<String> observable = toObservable(future);
+        Action1<Throwable> onError = mockAction();
+        RuntimeException exception = new RuntimeException("Test");
+        observable.subscribe(val -> {throw exception;}, onError);
+
+        verify(onError).call(exception);
+    }
+
 
     @Test
     public void testConvertToCompletableException() throws ExecutionException, InterruptedException {
@@ -261,12 +270,9 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
 
         observable.subscribe(
                 onNext,
-                new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable t) {
-                        onError.call(t);
-                        latch.countDown();
-                    }
+                t -> {
+                    onError.call(t);
+                    latch.countDown();
                 },
                 onComplete
         );
