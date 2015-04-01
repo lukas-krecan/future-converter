@@ -24,7 +24,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-spring-java8</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </dependency>
 
 And then use
@@ -46,7 +46,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-spring-guava</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </dependency>
 
 And then use
@@ -70,7 +70,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-java8-guava</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </dependency>
 
 And then use
@@ -88,7 +88,7 @@ Please note that conversion from/to RxJava Observables is not straightforward.
 
 * When converting Observable to a Future, only one element can be produced by the Observable. If your observable produces
 multiple values, please limit it using `observable.take(1)`.
-* When converting a Future to an Observable, it's not clear what should happen upon unsubscribe. Since version 0.2.1 RxJava support does
+* When converting a Future to an Observable, it's not clear what should happen upon unsubscribe. Since version 0.2.2 RxJava support does
 not cancel the Future, since there is no good place to keep track of the subscriptions (there may be multiple subscriptions for any given Future).
 * Converting Observable to a Future registers exactly one subscription which is unsubscribed upon Future cancel.
 
@@ -100,7 +100,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-rxjava-java8</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </dependency>
 
 And then use
@@ -120,7 +120,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-spring-rxjava</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </dependency>
 
 And then use
@@ -140,7 +140,7 @@ Import the dependency
     <dependency>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter-guava-rxjava</artifactId>
-        <version>0.2.1</version>
+        <version>0.2.2</version>
     </dependency>
 
 And then use
