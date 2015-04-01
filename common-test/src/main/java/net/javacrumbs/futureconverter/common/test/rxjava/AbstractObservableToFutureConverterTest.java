@@ -137,6 +137,24 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
     }
 
     @Test
+    public void shouldEndExceptionallyIfObservableFailsBeforeConversion() throws InterruptedException {
+        RuntimeException exception = new RuntimeException("test");
+        Observable<String> observable = Observable.error(exception);
+
+
+        T future = toFuture(observable);
+
+        assertTrue(future.isDone());
+        assertFalse(future.isCancelled());
+        try {
+            future.get();
+            fail("Exception expected");
+        } catch (ExecutionException e) {
+            assertSame(exception, e.getCause());
+        }
+    }
+
+    @Test
     public void testCancelNew() throws ExecutionException, InterruptedException {
         Observable<String> observable = createAsyncObservable();
 
@@ -228,6 +246,7 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
     /**
      * Future that is running underneath the Observable.
+     *
      * @return
      */
     protected Future getWorkerFuture() {

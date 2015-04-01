@@ -33,6 +33,9 @@ class ObservableListenableFuture<T> implements ListenableFuture<T> {
 
     ObservableListenableFuture(Observable<T> observable) {
         this.observable = observable;
+        //have to use doOnNext and doOnError since toFuture() registers subscription and we do not want
+        // to subscribe twice.  We are using toFuture() since there is no handy Future implementation in Java 7
+        // nor in Spring.
         this.futureFromObservable = observable
                 .doOnNext(new Action1<T>() {
                     @Override
@@ -56,6 +59,7 @@ class ObservableListenableFuture<T> implements ListenableFuture<T> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
+        // causes unsubscribe
         return futureFromObservable.cancel(mayInterruptIfRunning);
     }
 

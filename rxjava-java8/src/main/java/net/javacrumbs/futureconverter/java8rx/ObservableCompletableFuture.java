@@ -41,42 +41,7 @@ class ObservableCompletableFuture<T> extends CompletableFuture<T> {
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        boolean result = super.cancel(mayInterruptIfRunning);
         subscription.unsubscribe();
-        return result;
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-        checkSubscription();
-        return super.get();
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        checkSubscription();
-        return super.get(timeout, unit);
-    }
-
-    @Override
-    public boolean isCancelled() {
-        checkSubscription();
-        return super.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-        checkSubscription();
-        return super.isDone();
-    }
-
-    /**
-     * Sometimes the underlying task fails sooner than the subscription starts working. This
-     * should guard against such situation.
-     */
-    private void checkSubscription() {
-        if (subscription.isUnsubscribed() && !super.isDone()) {
-            completeExceptionally(new ExecutionException("Observable unsubscribed", null));
-        }
+        return super.cancel(mayInterruptIfRunning);
     }
 }
