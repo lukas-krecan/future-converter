@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import net.javacrumbs.futureconverter.common.FutureWrapper;
 import rx.Observable;
+import rx.Subscription;
 import rx.functions.Action1;
 
 import java.util.concurrent.Executor;
@@ -26,12 +27,13 @@ import java.util.concurrent.Future;
 
 class ObservableListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
     private final Observable<T> observable;
+    private final Subscription subscription;
 
     @SuppressWarnings("unchecked")
     ObservableListenableFuture(Observable<T> observable) {
         super((Future<T>) SettableFuture.create());
         this.observable = observable;
-        observable.single().subscribe(new Action1<T>() {
+        subscription = observable.single().subscribe(new Action1<T>() {
             @Override
             public void call(T t) {
                 getWrappedFuture().set(t);
@@ -42,6 +44,12 @@ class ObservableListenableFuture<T> extends FutureWrapper<T> implements Listenab
                 getWrappedFuture().setException(throwable);
             }
         });
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        subscription.unsubscribe();
+        return super.cancel(mayInterruptIfRunning);
     }
 
     @Override

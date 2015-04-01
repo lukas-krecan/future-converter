@@ -1,3 +1,6 @@
+## 0.2.2
+* rxjava-guava ListenableFuture unsubscribes upon cancel
+
 ## 0.2.1
 * RxJava - using observable.single() to take the first element
 

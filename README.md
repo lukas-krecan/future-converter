@@ -88,7 +88,7 @@ Please note that conversion from/to RxJava Observables is not straightforward.
 
 * When converting Observable to a Future, only one element can be produced by the Observable. If your observable produces
 multiple values, please limit it using `observable.take(1)`.
-* When converting a Future to an observable, it's not clear what should happen upon unsubscribe. Since version 0.2.1 RX Java support does
+* When converting a Future to an observable, it's not clear what should happen upon unsubscribe. Since version 0.2.1 RxJava support does
 not cancel the Future, since there is no good place to keep track of the subscriptions (there may be multiple subscriptions for one Future).
 
 # rxjava-java8

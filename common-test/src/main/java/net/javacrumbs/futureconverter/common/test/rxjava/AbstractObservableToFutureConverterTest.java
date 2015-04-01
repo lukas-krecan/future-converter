@@ -20,6 +20,8 @@ import org.junit.After;
 import org.junit.Test;
 import rx.Observable;
 import rx.Subscriber;
+import rx.schedulers.TestScheduler;
+import rx.subjects.TestSubject;
 import rx.subscriptions.Subscriptions;
 
 import java.io.IOException;
@@ -152,6 +154,19 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
 
         assertEquals(1, subscribed.get());
+    }
+
+    @Test
+    public void cancelShouldUnsubscribe() {
+        TestSubject<String> observable = TestSubject.create(new TestScheduler());
+        assertFalse(observable.hasObservers());
+
+        T future = toFuture(observable);
+        assertTrue(observable.hasObservers());
+
+        future.cancel(true);
+
+        assertFalse(observable.hasObservers());
     }
 
 
