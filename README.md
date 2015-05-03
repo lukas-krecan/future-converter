@@ -14,7 +14,7 @@ I am aware of the following quirks:
 * Observable can produce multiple values. When converting to Future, we take the first value
 * It is not [possible to cancel CompletableFuture](http://stackoverflow.com/questions/23320407/how-to-cancel-java-8-completable-future) if it's blocked.
 
-The project has pretty good test coverage, but testing asynchronous stuff is tricky. if you find any bug, please let me know.
+The project has pretty good test coverage, but testing asynchronous stuff is tricky. If you find any bug, please let me know.
 
 # spring-java8
 Converts between Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4.0.0.BUILD-SNAPSHOT/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html) and Java 8 [CompletableFuture](http://download.java.net/lambda/b88/docs/api/java/util/concurrent/CompletableFuture.html)
