@@ -21,6 +21,7 @@ import net.javacrumbs.futureconverter.common.test.common.CommonOriginalFutureTes
 import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.util.concurrent.SettableListenableFuture;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -41,13 +42,9 @@ public class SpringOriginalFutureTestHelper extends CommonOriginalFutureTestHelp
 
     @Override
     public ListenableFuture<String> createFinishedFuture() {
-        return executor.submitListenable(
-                new Callable<String>() {
-                    @Override
-                    public String call() throws Exception {
-                        return AbstractConverterTest.VALUE;
-                    }
-                });
+        SettableListenableFuture<String> future = new SettableListenableFuture<>();
+        future.set(AbstractConverterTest.VALUE);
+        return future;
     }
 
     @Override

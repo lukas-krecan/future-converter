@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 public class FutureWrapper<T> implements Future<T> {
     private final Future<T> wrappedFuture;
 
-    public FutureWrapper(Future<T> wrappedFuture) {
+    protected FutureWrapper(Future<T> wrappedFuture) {
         if (wrappedFuture == null) {
             throw new NullPointerException("Wrapped future can not be null");
         }
@@ -58,7 +58,7 @@ public class FutureWrapper<T> implements Future<T> {
         return wrappedFuture.get(timeout, unit);
     }
 
-    public Future<T> getWrappedFuture() {
+    protected Future<T> getWrappedFuture() {
         return wrappedFuture;
     }
 }

@@ -1,3 +1,7 @@
+## 0.3.0
+* Support for Spring 4.1.
+* spring-rxjava requires Spring 4.1
+
 ## 0.2.2
 * rxjava-guava ListenableFuture unsubscribes upon cancel
 

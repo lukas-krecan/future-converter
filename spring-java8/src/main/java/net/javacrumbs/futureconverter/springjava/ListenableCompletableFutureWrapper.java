@@ -15,10 +15,8 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
-import net.javacrumbs.futureconverter.common.FutureWrapper;
+import net.javacrumbs.futureconverter.common.spring.AbstractSpringListenableFutureWrapper;
 import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -28,27 +26,20 @@ import java.util.concurrent.CompletionException;
  *
  * @param <T>
  */
-class ListenableCompletableFutureWrapper<T> extends FutureWrapper<T> implements ListenableFuture<T> {
-    private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
-
+class ListenableCompletableFutureWrapper<T> extends AbstractSpringListenableFutureWrapper<T> implements ListenableFuture<T> {
     ListenableCompletableFutureWrapper(CompletableFuture<T> wrapped) {
         super(wrapped);
         wrapped.whenComplete((result, ex) -> {
             if (ex != null) {
                 if (ex instanceof CompletionException && ex.getCause() != null) {
-                    callbackRegistry.failure(ex.getCause());
+                    failure(ex.getCause());
                 } else {
-                    callbackRegistry.failure(ex);
+                   failure(ex);
                 }
             } else {
-                callbackRegistry.success(result);
+                success(result);
             }
         });
-    }
-
-    @Override
-    public void addCallback(ListenableFutureCallback<? super T> callback) {
-        callbackRegistry.addCallback(callback);
     }
 
     @Override

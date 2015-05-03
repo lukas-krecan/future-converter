@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import net.javacrumbs.futureconverter.common.FutureWrapper;
+import net.javacrumbs.futureconverter.common.spring.AbstractSpringListenableFutureWrapper;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 
@@ -65,22 +66,18 @@ public class FutureConverter {
      *
      * @param <T>
      */
-    private static class SpringListenableWrappingGuavaListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
+    private static class SpringListenableWrappingGuavaListenableFuture<T> extends AbstractSpringListenableFutureWrapper<T> implements ListenableFuture<T> {
         public SpringListenableWrappingGuavaListenableFuture(com.google.common.util.concurrent.ListenableFuture<T> guavaListenableFuture) {
             super(guavaListenableFuture);
-        }
-
-        @Override
-        public void addCallback(final ListenableFutureCallback<? super T> callback) {
             Futures.addCallback(getWrappedFuture(), new FutureCallback<T>() {
                 @Override
                 public void onSuccess(T result) {
-                    callback.onSuccess(result);
+                    success(result);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    callback.onFailure(t);
+                    failure(t);
                 }
             }, MoreExecutors.directExecutor());
         }

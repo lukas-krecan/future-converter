@@ -15,75 +15,61 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
+import net.javacrumbs.futureconverter.common.FutureWrapper;
+import org.springframework.util.concurrent.FailureCallback;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
-import org.springframework.util.concurrent.ListenableFutureCallbackRegistry;
+import org.springframework.util.concurrent.SettableListenableFuture;
+import org.springframework.util.concurrent.SuccessCallback;
 import rx.Observable;
+import rx.Subscription;
 import rx.functions.Action1;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-class ObservableListenableFuture<T> implements ListenableFuture<T> {
+class ObservableListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
     private final Observable<T> observable;
-    private final Future<T> futureFromObservable;
-    private final ListenableFutureCallbackRegistry<T> callbackRegistry = new ListenableFutureCallbackRegistry<>();
+    private final Subscription subscription;
 
     ObservableListenableFuture(Observable<T> observable) {
+        super(new SettableListenableFuture<T>());
         this.observable = observable;
-        //have to use doOnNext and doOnError since toFuture() registers subscription and we do not want
-        // to subscribe twice.  We are using toFuture() since there is no handy Future implementation in Java 7
-        // nor in Spring.
-        this.futureFromObservable = observable
-                .doOnNext(new Action1<T>() {
+        subscription = observable.single().subscribe(
+                new Action1<T>() {
                     @Override
                     public void call(T t) {
-                        callbackRegistry.success(t);
+                        getWrappedFuture().set(t);
                     }
-                })
-                .doOnError(new Action1<Throwable>() {
+                },
+                new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
-                        callbackRegistry.failure(throwable);
+                        getWrappedFuture().setException(throwable);
                     }
-                })
-                .toBlocking().toFuture();
+                }
+        );
     }
 
     @Override
     public void addCallback(ListenableFutureCallback<? super T> callback) {
-        callbackRegistry.addCallback(callback);
+        getWrappedFuture().addCallback(callback);
+    }
+
+    @Override
+    public void addCallback(SuccessCallback<? super T> successCallback, FailureCallback failureCallback) {
+        getWrappedFuture().addCallback(successCallback, failureCallback);
     }
 
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
-        // causes unsubscribe
-        return futureFromObservable.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return futureFromObservable.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-        return futureFromObservable.isDone();
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-        return futureFromObservable.get();
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        return futureFromObservable.get(timeout, unit);
+        subscription.unsubscribe();
+        return super.cancel(mayInterruptIfRunning);
     }
 
     public Observable<T> getObservable() {
         return observable;
+    }
+
+    @Override
+    public SettableListenableFuture<T> getWrappedFuture() {
+        return (SettableListenableFuture<T>) super.getWrappedFuture();
     }
 }
