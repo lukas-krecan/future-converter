@@ -1,3 +1,6 @@
+## 0.3.1
+* ObservableListenableFuture simplified
+
 ## 0.3.0
 * Support for Spring 4.1.
 * spring-rxjava requires Spring 4.1

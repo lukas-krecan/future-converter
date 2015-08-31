@@ -15,47 +15,31 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
-import net.javacrumbs.futureconverter.common.FutureWrapper;
-import org.springframework.util.concurrent.FailureCallback;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.util.concurrent.SettableListenableFuture;
-import org.springframework.util.concurrent.SuccessCallback;
 import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
 
-class ObservableListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
+class ObservableListenableFuture<T> extends SettableListenableFuture<T> {
     private final Observable<T> observable;
     private final Subscription subscription;
 
     ObservableListenableFuture(Observable<T> observable) {
-        super(new SettableListenableFuture<T>());
         this.observable = observable;
         subscription = observable.single().subscribe(
                 new Action1<T>() {
                     @Override
                     public void call(T t) {
-                        getWrappedFuture().set(t);
+                        set(t);
                     }
                 },
                 new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
-                        getWrappedFuture().setException(throwable);
+                        setException(throwable);
                     }
                 }
         );
-    }
-
-    @Override
-    public void addCallback(ListenableFutureCallback<? super T> callback) {
-        getWrappedFuture().addCallback(callback);
-    }
-
-    @Override
-    public void addCallback(SuccessCallback<? super T> successCallback, FailureCallback failureCallback) {
-        getWrappedFuture().addCallback(successCallback, failureCallback);
     }
 
     @Override
@@ -66,10 +50,5 @@ class ObservableListenableFuture<T> extends FutureWrapper<T> implements Listenab
 
     public Observable<T> getObservable() {
         return observable;
-    }
-
-    @Override
-    public SettableListenableFuture<T> getWrappedFuture() {
-        return (SettableListenableFuture<T>) super.getWrappedFuture();
     }
 }
