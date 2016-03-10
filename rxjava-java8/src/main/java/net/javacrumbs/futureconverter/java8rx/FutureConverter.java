@@ -36,7 +36,7 @@ public class FutureConverter {
         if (observable instanceof OriginSource && ((OriginSource) observable).getOrigin() instanceof CompletableFuture) {
             return (CompletableFuture<T>) ((OriginSource) observable).getOrigin();
         } else {
-            SettableFuture<T> completableFuture = Java8FutureUtils.createSettableComplatableFuture(observable);
+            SettableFuture<T> completableFuture = Java8FutureUtils.createSettableFuture(observable);
             RxJavaFutureUtils.waitForResults(observable, completableFuture);
             return (CompletableFuture<T>) completableFuture;
         }

@@ -42,13 +42,13 @@ public class Java8FutureUtils {
         }
     }
 
-    public static <T> SettableFuture<T> createSettableComplatableFuture(Object origin) {
+    public static <T> SettableFuture<T> createSettableFuture(Object origin) {
         return new SettableCompletableFuture<>(origin);
     }
 
     private static final class SettableCompletableFuture<T> extends CompletableFuture<T> implements SettableFuture<T> {
         private final Object origin;
-        private Runnable cancelationCallback;
+        private Runnable cancellationCallback;
 
         public SettableCompletableFuture(Object origin) {
             this.origin = origin;
@@ -67,10 +67,10 @@ public class Java8FutureUtils {
         @Override
         public void setCancellationCallback(Runnable callback) {
             requireNonNull(callback);
-            if (cancelationCallback!=null){
-                throw new IllegalStateException("Cancelation callback can be set only once.");
+            if (cancellationCallback !=null){
+                throw new IllegalStateException("Cancellation callback can be set only once.");
             };
-            cancelationCallback = callback;
+            cancellationCallback = callback;
         }
 
         public Object getOrigin() {
@@ -79,7 +79,7 @@ public class Java8FutureUtils {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            cancelationCallback.run();
+            cancellationCallback.run();
             return super.cancel(mayInterruptIfRunning);
         }
     }

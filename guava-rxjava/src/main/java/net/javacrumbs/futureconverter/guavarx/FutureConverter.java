@@ -16,6 +16,10 @@
 package net.javacrumbs.futureconverter.guavarx;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import net.javacrumbs.futureconverter.common.internal.OriginSource;
+import net.javacrumbs.futureconverter.common.internal.SettableFuture;
+import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
 import rx.Observable;
 
 public class FutureConverter {
@@ -29,12 +33,11 @@ public class FutureConverter {
      * @return
      */
     public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof ObservableListenableFuture) {
-            return ((ObservableListenableFuture<T>) listenableFuture).getObservable();
+        if (listenableFuture instanceof OriginSource && ((OriginSource) listenableFuture).getOrigin() instanceof Observable) {
+            return (Observable<T>) ((OriginSource) listenableFuture).getOrigin();
         } else {
-            return new ListenableFutureObservable<>(listenableFuture);
+            return RxJavaFutureUtils.createObservable(GuavaFutureUtils.createCommonListenable(listenableFuture));
         }
-
     }
 
     /**
@@ -46,10 +49,12 @@ public class FutureConverter {
      * @return
      */
     public static <T> ListenableFuture<T> toListenableFuture(Observable<T> observable) {
-        if (observable instanceof ListenableFutureObservable) {
-            return ((ListenableFutureObservable<T>) observable).getListenableFuture();
+        if (observable instanceof OriginSource && ((OriginSource) observable).getOrigin() instanceof ListenableFuture) {
+            return (ListenableFuture<T>) ((OriginSource) observable).getOrigin();
         } else {
-            return new ObservableListenableFuture<>(observable);
+            SettableFuture<T> settableFuture = GuavaFutureUtils.createSettableFuture(observable);
+            RxJavaFutureUtils.waitForResults(observable, settableFuture);
+            return (ListenableFuture<T>) settableFuture;
         }
     }
 

@@ -23,8 +23,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import net.javacrumbs.futureconverter.common.FutureWrapper;
 import net.javacrumbs.futureconverter.common.internal.AbstractCommonListenableFutureWrapper;
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
+import net.javacrumbs.futureconverter.common.internal.SettableFuture;
 
 import java.util.concurrent.Executor;
+
+import static java.util.Objects.requireNonNull;
 
 
 public class GuavaFutureUtils {
@@ -41,6 +44,60 @@ public class GuavaFutureUtils {
             return ((ListenableFutureCommonListenableWrapper<T>) listenableFuture).getWrappedFuture();
         } else {
             return new CommonListenableListenableFutureWrapper<T>(listenableFuture);
+        }
+    }
+
+    public static <T> SettableFuture<T> createSettableFuture(Object origin) {
+        return new SettableListenableFuture<T>(origin);
+    }
+
+    private static class SettableListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T>, SettableFuture<T> {
+        private final Object origin;
+        private Runnable cancellationCallback;
+
+        private SettableListenableFuture(Object origin) {
+            super(com.google.common.util.concurrent.SettableFuture.<T>create());
+            this.origin = origin;
+        }
+
+        @Override
+        public void addListener(Runnable listener, Executor executor) {
+            getWrappedFuture().addListener(listener, executor);
+        }
+
+        @Override
+        protected com.google.common.util.concurrent.SettableFuture<T> getWrappedFuture() {
+            return (com.google.common.util.concurrent.SettableFuture<T>) super.getWrappedFuture();
+        }
+
+        @Override
+        public void setResult(T value) {
+            getWrappedFuture().set(value);
+        }
+
+        @Override
+        public void setException(Throwable exception) {
+            getWrappedFuture().setException(exception);
+        }
+
+        @Override
+        public void setCancellationCallback(Runnable callback) {
+            requireNonNull(callback);
+            if (cancellationCallback !=null){
+                throw new IllegalStateException("Cancellation callback can be set only once.");
+            };
+            cancellationCallback = callback;
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            cancellationCallback.run();
+            return super.cancel(mayInterruptIfRunning);
+        }
+
+        @Override
+        public Object getOrigin() {
+            return origin;
         }
     }
 
