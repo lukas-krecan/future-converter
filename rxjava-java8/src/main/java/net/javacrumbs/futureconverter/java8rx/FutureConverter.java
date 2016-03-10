@@ -15,6 +15,10 @@
  */
 package net.javacrumbs.futureconverter.java8rx;
 
+import net.javacrumbs.futureconverter.common.internal.OriginSource;
+import net.javacrumbs.futureconverter.common.internal.SettableFuture;
+import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
 import rx.Observable;
 
 import java.util.concurrent.CompletableFuture;
@@ -27,32 +31,26 @@ public class FutureConverter {
     /**
      * Converts {@link rx.Observable} to {@link java.util.concurrent.CompletableFuture}. Takes
      * only the first value produced by observable.
-     *
-     * @param observable
-     * @param <T>
-     * @return
      */
     public static <T> CompletableFuture<T> toCompletableFuture(Observable<T> observable) {
-        if (observable instanceof CompletableFutureObservable) {
-            return ((CompletableFutureObservable<T>) observable).getCompletableFuture();
+        if (observable instanceof OriginSource && ((OriginSource) observable).getOrigin() instanceof CompletableFuture) {
+            return (CompletableFuture<T>) ((OriginSource) observable).getOrigin();
         } else {
-            return new ObservableCompletableFuture<>(observable);
+            SettableFuture<T> completableFuture = Java8FutureUtils.createSettableComplatableFuture(observable);
+            RxJavaFutureUtils.waitForResults(observable, completableFuture);
+            return (CompletableFuture<T>) completableFuture;
         }
     }
 
     /**
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Observable}.
      * The original future is NOT canceled upon unsubscribe.
-     *
-     * @param completableFuture
-     * @param <T>
-     * @return
      */
     public static <T> Observable<T> toObservable(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof ObservableCompletableFuture) {
-            return ((ObservableCompletableFuture<T>) completableFuture).getObservable();
+        if (completableFuture instanceof OriginSource && ((OriginSource) completableFuture).getOrigin() instanceof Observable) {
+            return (Observable<T>) ((OriginSource) completableFuture).getOrigin();
         } else {
-            return new CompletableFutureObservable<>(completableFuture);
+            return RxJavaFutureUtils.createObservable(Java8FutureUtils.createCommonListenable(completableFuture));
         }
     }
 }

@@ -28,6 +28,9 @@
     <modules>
         <module>common</module>
         <module>common-test</module>
+        <module>java8-common</module>
+        <module>guava-common</module>
+        <module>rxjava-common</module>
         <module>spring-java8</module>
         <module>rxjava-java8</module>
         <module>spring-rxjava</module>

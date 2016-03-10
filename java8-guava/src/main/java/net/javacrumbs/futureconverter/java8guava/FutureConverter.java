@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -36,11 +38,7 @@ public class FutureConverter {
      * @return
      */
     public static <T> ListenableFuture<T> toListenableFuture(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof CompletableListenableFuture) {
-            return ((CompletableListenableFuture<T>) completableFuture).getListenableFuture();
-        } else {
-            return new ListenableCompletableFutureWrapper<>(completableFuture);
-        }
+        return GuavaFutureUtils.createListenableFuture(Java8FutureUtils.createCommonListenable(completableFuture));
     }
 
     /**
@@ -51,45 +49,6 @@ public class FutureConverter {
      * @return
      */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof ListenableCompletableFutureWrapper) {
-            return ((ListenableCompletableFutureWrapper<T>) listenableFuture).getWrappedFuture();
-        } else {
-            return buildCompletableFutureFromListenableFuture(listenableFuture);
-        }
-    }
-
-    private static <T> CompletableFuture<T> buildCompletableFutureFromListenableFuture(final ListenableFuture<T> listenableFuture) {
-        CompletableFuture<T> completable = new CompletableListenableFuture<T>(listenableFuture);
-        Futures.addCallback(listenableFuture, new FutureCallback<T>() {
-            @Override
-            public void onSuccess(T result) {
-                completable.complete(result);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                completable.completeExceptionally(t);
-            }
-        }, MoreExecutors.directExecutor());
-        return completable;
-    }
-
-    private static final class CompletableListenableFuture<T> extends CompletableFuture<T> {
-        private final ListenableFuture<T> listenableFuture;
-
-        public CompletableListenableFuture(ListenableFuture<T> listenableFuture) {
-            this.listenableFuture = listenableFuture;
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            boolean result = listenableFuture.cancel(mayInterruptIfRunning);
-            super.cancel(mayInterruptIfRunning);
-            return result;
-        }
-
-        public ListenableFuture<T> getListenableFuture() {
-            return listenableFuture;
-        }
+        return Java8FutureUtils.createCompletableFuture(GuavaFutureUtils.createCommonListenable(listenableFuture));
     }
 }
