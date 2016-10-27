@@ -17,6 +17,7 @@ package net.javacrumbs.futureconverter.springrx;
 
 import org.springframework.util.concurrent.ListenableFuture;
 import rx.Observable;
+import rx.Single;
 
 public class FutureConverter {
 
@@ -27,7 +28,7 @@ public class FutureConverter {
      * @param <T>
      * @return
      */
-    public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
+    public static <T> Single<T> toObservable(ListenableFuture<T> listenableFuture) {
         if (listenableFuture instanceof ObservableListenableFuture) {
             return ((ObservableListenableFuture<T>) listenableFuture).getObservable();
         } else {
@@ -44,7 +45,7 @@ public class FutureConverter {
      * @param <T>
      * @return
      */
-    public static <T> ListenableFuture<T> toListenableFuture(Observable<T> observable) {
+    public static <T> ListenableFuture<T> toListenableFuture(Single<T> observable) {
         if (observable instanceof ListenableFutureObservable) {
             return ((ListenableFutureObservable<T>) observable).getListenableFuture();
         } else {

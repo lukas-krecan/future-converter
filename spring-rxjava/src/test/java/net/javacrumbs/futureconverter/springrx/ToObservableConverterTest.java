@@ -19,6 +19,7 @@ import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToObserva
 import net.javacrumbs.futureconverter.common.test.spring.SpringOriginalFutureTestHelper;
 import org.springframework.util.concurrent.ListenableFuture;
 import rx.Observable;
+import rx.Single;
 
 public class ToObservableConverterTest extends AbstractFutureToObservableConverterTest<ListenableFuture<String>> {
 
@@ -27,12 +28,12 @@ public class ToObservableConverterTest extends AbstractFutureToObservableConvert
     }
 
     @Override
-    protected Observable<String> toObservable(ListenableFuture<String> future) {
+    protected Single<String> toSingle(ListenableFuture<String> future) {
         return FutureConverter.toObservable(future);
     }
 
     @Override
-    protected ListenableFuture<String> toFuture(Observable<String> observable) {
-        return FutureConverter.toListenableFuture(observable);
+    protected ListenableFuture<String> toFuture(Single<String> single) {
+        return FutureConverter.toListenableFuture(single);
     }
 }

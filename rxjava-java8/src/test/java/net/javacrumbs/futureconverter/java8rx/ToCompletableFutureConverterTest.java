@@ -17,7 +17,7 @@ package net.javacrumbs.futureconverter.java8rx;
 
 import net.javacrumbs.futureconverter.common.test.java8.Java8ConvertedFutureTestHelper;
 import net.javacrumbs.futureconverter.common.test.rxjava.AbstractObservableToFutureConverterTest;
-import rx.Observable;
+import rx.Single;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -27,12 +27,12 @@ public class ToCompletableFutureConverterTest extends AbstractObservableToFuture
     }
 
     @Override
-    protected CompletableFuture<String> toFuture(Observable<String> observable) {
+    protected CompletableFuture<String> toFuture(Single<String> observable) {
         return FutureConverter.toCompletableFuture(observable);
     }
 
     @Override
-    protected Observable<String> toObservable(CompletableFuture<String> future) {
-        return FutureConverter.toObservable(future);
+    protected Single<String> toSingle(CompletableFuture<String> future) {
+        return FutureConverter.toSingle(future);
     }
 }

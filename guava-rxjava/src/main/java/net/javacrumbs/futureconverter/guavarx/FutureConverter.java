@@ -20,7 +20,7 @@ import net.javacrumbs.futureconverter.common.internal.OriginSource;
 import net.javacrumbs.futureconverter.common.internal.SettableFuture;
 import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
 import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
-import rx.Observable;
+import rx.Single;
 
 public class FutureConverter {
 
@@ -28,32 +28,25 @@ public class FutureConverter {
      * Converts {@link com.google.common.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
      * The original future is NOT canceled upon unsubscribe.
      *
-     * @param listenableFuture
-     * @param <T>
-     * @return
      */
-    public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof OriginSource && ((OriginSource) listenableFuture).getOrigin() instanceof Observable) {
-            return (Observable<T>) ((OriginSource) listenableFuture).getOrigin();
+    public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
+        if (listenableFuture instanceof OriginSource && ((OriginSource) listenableFuture).getOrigin() instanceof Single) {
+            return (Single<T>) ((OriginSource) listenableFuture).getOrigin();
         } else {
-            return RxJavaFutureUtils.createObservable(GuavaFutureUtils.createCommonListenable(listenableFuture));
+            return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createCommonListenable(listenableFuture));
         }
     }
 
     /**
      * Converts  {@link rx.Observable} to {@link com.google.common.util.concurrent.ListenableFuture}.
      * Modifies the original Observable and takes only the first value.
-     *
-     * @param observable
-     * @param <T>
-     * @return
      */
-    public static <T> ListenableFuture<T> toListenableFuture(Observable<T> observable) {
-        if (observable instanceof OriginSource && ((OriginSource) observable).getOrigin() instanceof ListenableFuture) {
-            return (ListenableFuture<T>) ((OriginSource) observable).getOrigin();
+    public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
+        if (single instanceof OriginSource && ((OriginSource) single).getOrigin() instanceof ListenableFuture) {
+            return (ListenableFuture<T>) ((OriginSource) single).getOrigin();
         } else {
-            SettableFuture<T> settableFuture = GuavaFutureUtils.createSettableFuture(observable);
-            RxJavaFutureUtils.waitForResults(observable, settableFuture);
+            SettableFuture<T> settableFuture = GuavaFutureUtils.createSettableFuture(single);
+            RxJavaFutureUtils.waitForResults(single, settableFuture);
             return (ListenableFuture<T>) settableFuture;
         }
     }

@@ -16,7 +16,7 @@
 package net.javacrumbs.futureconverter.common.internal;
 
 public interface CommonListenable<T> extends OriginSource {
-    public void addSuccessCallback(CommonCallback<T> successCallback);
-    public void addFailureCallback(CommonCallback<Throwable> failureCallback);
+    void addSuccessCallback(CommonCallback<T> successCallback);
+    void addFailureCallback(CommonCallback<Throwable> failureCallback);
     boolean cancel(boolean mayInterruptIfRunning);
 }

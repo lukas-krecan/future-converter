@@ -19,15 +19,15 @@ import net.javacrumbs.futureconverter.common.internal.CommonCallback;
 import net.javacrumbs.futureconverter.common.internal.CommonListenable;
 import net.javacrumbs.futureconverter.common.internal.OriginSource;
 import net.javacrumbs.futureconverter.common.internal.SettableFuture;
-import rx.Observable;
-import rx.Subscriber;
+import rx.Single;
+import rx.SingleSubscriber;
 import rx.Subscription;
 import rx.functions.Action1;
 
 public class RxJavaFutureUtils {
 
-    public static <T> void waitForResults(Observable<T> observable, final SettableFuture<T> settableFuture) {
-        final Subscription subscription = observable.single().subscribe(
+    public static <T> void waitForResults(Single<T> single, final SettableFuture<T> settableFuture) {
+        final Subscription subscription = single.subscribe(
             new Action1<T>() {
                 @Override
                 public void call(T t) {
@@ -49,11 +49,11 @@ public class RxJavaFutureUtils {
         });
     }
 
-    public static <T> Observable<T> createObservable(CommonListenable<T> commonListenable) {
+    public static <T> Single<T> createSingle(CommonListenable<T> commonListenable) {
         return new CommonListenableObservable<>(commonListenable);
     }
 
-    private static class CommonListenableObservable<T> extends Observable<T> implements OriginSource {
+    private static class CommonListenableObservable<T> extends Single<T> implements OriginSource {
         private final CommonListenable<T> commonListenable;
 
         CommonListenableObservable(CommonListenable<T> commonListenable) {
@@ -64,13 +64,16 @@ public class RxJavaFutureUtils {
         private static <T> OnSubscribe<T> onSubscribe(final CommonListenable<T> commonListenable) {
             return new OnSubscribe<T>() {
                 @Override
-                public void call(final Subscriber<? super T> subscriber) {
+                public void call(final SingleSubscriber<? super T> subscriber) {
                     commonListenable.addSuccessCallback(new CommonCallback<T>() {
                         @Override
                         public void process(T value) {
                             if (!subscriber.isUnsubscribed()) {
-                                subscriber.onNext(value);
-                                subscriber.onCompleted();
+                                try {
+                                    subscriber.onSuccess(value);
+                                } catch (Throwable e) {
+                                    subscriber.onError(e);
+                                }
                             }
                         }
                     });

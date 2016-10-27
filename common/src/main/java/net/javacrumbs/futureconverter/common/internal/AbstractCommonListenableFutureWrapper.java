@@ -25,7 +25,7 @@ public abstract class AbstractCommonListenableFutureWrapper<T> extends FutureWra
     }
 
     @Override
-    public Object getOrigin() {
+    public Future<T> getOrigin() {
         return getWrappedFuture();
     }
 }

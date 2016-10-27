@@ -19,7 +19,7 @@ import net.javacrumbs.futureconverter.common.internal.OriginSource;
 import net.javacrumbs.futureconverter.common.internal.SettableFuture;
 import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
 import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
-import rx.Observable;
+import rx.Single;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -32,12 +32,12 @@ public class FutureConverter {
      * Converts {@link rx.Observable} to {@link java.util.concurrent.CompletableFuture}. Takes
      * only the first value produced by observable.
      */
-    public static <T> CompletableFuture<T> toCompletableFuture(Observable<T> observable) {
-        if (observable instanceof OriginSource && ((OriginSource) observable).getOrigin() instanceof CompletableFuture) {
-            return (CompletableFuture<T>) ((OriginSource) observable).getOrigin();
+    public static <T> CompletableFuture<T> toCompletableFuture(Single<T> single) {
+        if (single instanceof OriginSource && ((OriginSource) single).getOrigin() instanceof CompletableFuture) {
+            return (CompletableFuture<T>) ((OriginSource) single).getOrigin();
         } else {
-            SettableFuture<T> completableFuture = Java8FutureUtils.createSettableFuture(observable);
-            RxJavaFutureUtils.waitForResults(observable, completableFuture);
+            SettableFuture<T> completableFuture = Java8FutureUtils.createSettableFuture(single);
+            RxJavaFutureUtils.waitForResults(single, completableFuture);
             return (CompletableFuture<T>) completableFuture;
         }
     }
@@ -46,11 +46,11 @@ public class FutureConverter {
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Observable}.
      * The original future is NOT canceled upon unsubscribe.
      */
-    public static <T> Observable<T> toObservable(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof OriginSource && ((OriginSource) completableFuture).getOrigin() instanceof Observable) {
-            return (Observable<T>) ((OriginSource) completableFuture).getOrigin();
+    public static <T> Single<T> toSingle(CompletableFuture<T> completableFuture) {
+        if (completableFuture instanceof OriginSource && ((OriginSource) completableFuture).getOrigin() instanceof Single) {
+            return (Single<T>) ((OriginSource) completableFuture).getOrigin();
         } else {
-            return RxJavaFutureUtils.createObservable(Java8FutureUtils.createCommonListenable(completableFuture));
+            return RxJavaFutureUtils.createSingle(Java8FutureUtils.createCommonListenable(completableFuture));
         }
     }
 }

@@ -18,6 +18,8 @@ package net.javacrumbs.futureconverter.springrx;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import rx.Observable;
+import rx.Single;
+import rx.SingleSubscriber;
 import rx.Subscriber;
 
 /**
@@ -26,7 +28,7 @@ import rx.Subscriber;
  *
  * @param <T>
  */
-class ListenableFutureObservable<T> extends Observable<T> {
+class ListenableFutureObservable<T> extends Single<T> {
     private final ListenableFuture<T> listenableFuture;
 
     ListenableFutureObservable(ListenableFuture<T> listenableFuture) {
@@ -35,15 +37,14 @@ class ListenableFutureObservable<T> extends Observable<T> {
     }
 
     private static <T> OnSubscribe<T> onSubscribe(final ListenableFuture<T> listenableFuture) {
-        return new Observable.OnSubscribe<T>() {
+        return new Single.OnSubscribe<T>() {
             @Override
-            public void call(final Subscriber<? super T> subscriber) {
+            public void call(final SingleSubscriber<? super T> subscriber) {
                 listenableFuture.addCallback(new ListenableFutureCallback<T>() {
                     @Override
                     public void onSuccess(T t) {
                         if (!subscriber.isUnsubscribed()) {
-                            subscriber.onNext(t);
-                            subscriber.onCompleted();
+                            subscriber.onSuccess(t);
                         }
                     }
 

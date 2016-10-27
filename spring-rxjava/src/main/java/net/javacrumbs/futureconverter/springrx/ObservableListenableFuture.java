@@ -17,16 +17,17 @@ package net.javacrumbs.futureconverter.springrx;
 
 import org.springframework.util.concurrent.SettableListenableFuture;
 import rx.Observable;
+import rx.Single;
 import rx.Subscription;
 import rx.functions.Action1;
 
 class ObservableListenableFuture<T> extends SettableListenableFuture<T> {
-    private final Observable<T> observable;
+    private final Single<T> observable;
     private final Subscription subscription;
 
-    ObservableListenableFuture(Observable<T> observable) {
+    ObservableListenableFuture(Single<T> observable) {
         this.observable = observable;
-        subscription = observable.single().subscribe(
+        subscription = observable.subscribe(
                 new Action1<T>() {
                     @Override
                     public void call(T t) {
@@ -48,7 +49,7 @@ class ObservableListenableFuture<T> extends SettableListenableFuture<T> {
         return super.cancel(mayInterruptIfRunning);
     }
 
-    public Observable<T> getObservable() {
+    public Single<T> getObservable() {
         return observable;
     }
 }
