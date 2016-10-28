@@ -28,18 +28,8 @@ class ObservableListenableFuture<T> extends SettableListenableFuture<T> {
     ObservableListenableFuture(Single<T> observable) {
         this.observable = observable;
         subscription = observable.subscribe(
-                new Action1<T>() {
-                    @Override
-                    public void call(T t) {
-                        set(t);
-                    }
-                },
-                new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        setException(throwable);
-                    }
-                }
+            this::set,
+            this::setException
         );
     }
 

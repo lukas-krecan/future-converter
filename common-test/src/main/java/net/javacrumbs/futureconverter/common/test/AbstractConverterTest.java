@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -136,7 +137,7 @@ public abstract class AbstractConverterTest<F extends Future<String>, T extends 
         originalFuture.cancel(true);
 
         T convertedFuture = convert(originalFuture);
-        assertFalse(convertedFuture.cancel(true));
+        assertTrue(convertedFuture.isCancelled());
 
         try {
             convertedFuture.get();

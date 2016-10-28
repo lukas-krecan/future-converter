@@ -20,15 +20,80 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import net.javacrumbs.futureconverter.common.FutureWrapper;
+import net.javacrumbs.futureconverter.common.internal.CancellationCallback;
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
+import net.javacrumbs.futureconverter.common.internal.ValueConsumer;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 
 public class GuavaFutureUtils {
+    public static <T> ListenableFutureValueConsumerImpl<T> createListenableFuture(CancellationCallback cancellationCallback) {
+        return new ListenableFutureValueConsumerImpl<>(cancellationCallback);
+    }
+
+    public static <T, S extends ValueConsumer<T>> S registerListeners(ListenableFuture<T> listenableFuture, S valueConsumer) {
+        listenableFuture.addListener(() -> {
+                try {
+                    valueConsumer.success(listenableFuture.get());
+                } catch (ExecutionException e) {
+                    valueConsumer.failure(e.getCause());
+                } catch (Throwable e) {
+                    valueConsumer.failure(e);
+                }
+            },
+            MoreExecutors.directExecutor()
+        );
+
+        return valueConsumer;
+    }
+
+    private static class ListenableFutureValueConsumerImpl<T> extends FutureWrapper<T> implements ListenableFuture<T>, ValueConsumer<T> {
+
+        private final CancellationCallback cancellationCallback;
+
+        private ListenableFutureValueConsumerImpl(CancellationCallback cancellationCallback) {
+            super(SettableFuture.create());
+            this.cancellationCallback = cancellationCallback;
+        }
+
+        @Override
+        public void success(T value) {
+            getWrappedFuture().set(value);
+        }
+
+        @Override
+        public void failure(Throwable ex) {
+            if (ex instanceof CancellationException) {
+                getWrappedFuture().cancel(true);
+            } else {
+                getWrappedFuture().setException(ex);
+            }
+        }
+
+        @Override
+        public void addListener(Runnable listener, Executor executor) {
+            getWrappedFuture().addListener(listener, executor);
+        }
+
+        @Override
+        protected SettableFuture<T> getWrappedFuture() {
+            return (SettableFuture<T>) super.getWrappedFuture();
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            cancellationCallback.cancel(mayInterruptIfRunning);
+            return super.cancel(mayInterruptIfRunning);
+        }
+    }
+
     /**
      * Creates listenable future from ValueSourceFuture. We have to send all Future API calls to ValueSourceFuture.
      */

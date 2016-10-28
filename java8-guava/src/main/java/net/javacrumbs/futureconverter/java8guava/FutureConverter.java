@@ -31,13 +31,13 @@ public class FutureConverter {
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link com.google.common.util.concurrent.ListenableFuture}.
      */
     public static <T> ListenableFuture<T> toListenableFuture(CompletableFuture<T> completableFuture) {
-        return GuavaFutureUtils.createListenableFuture(Java8FutureUtils.createValueSourceFuture(completableFuture));
+        return Java8FutureUtils.registerListeners(completableFuture, GuavaFutureUtils.createListenableFuture(completableFuture::cancel));
     }
 
     /**
      * Converts  {@link com.google.common.util.concurrent.ListenableFuture} to {@link java.util.concurrent.CompletableFuture}.
      */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-        return Java8FutureUtils.createCompletableFuture(GuavaFutureUtils.createValueSource(listenableFuture));
+        return GuavaFutureUtils.registerListeners(listenableFuture, Java8FutureUtils.createCompletableFuture(listenableFuture::cancel));
     }
 }

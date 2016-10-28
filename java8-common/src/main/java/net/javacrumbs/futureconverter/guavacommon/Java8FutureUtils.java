@@ -15,16 +15,65 @@
  */
 package net.javacrumbs.futureconverter.guavacommon;
 
+import net.javacrumbs.futureconverter.common.internal.CancellationCallback;
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
 import net.javacrumbs.futureconverter.common.internal.SettableFuture;
+import net.javacrumbs.futureconverter.common.internal.ValueConsumer;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
 
 public class Java8FutureUtils {
+    public static <T> CompletableFutureValueConsumer<T> createCompletableFuture(CancellationCallback cancellationCallback) {
+        return new CompletableFutureValueConsumer<>(cancellationCallback);
+    }
+
+    public static <T, S extends ValueConsumer<T>> S registerListeners(CompletableFuture<T> completableFuture, S valueConsumer) {
+        completableFuture.whenComplete((v, t) -> {
+           if (t == null) {
+               valueConsumer.success(v);
+           } else {
+               valueConsumer.failure(t);
+           }
+        });
+        return valueConsumer;
+    }
+
+    private static class CompletableFutureValueConsumer<T> extends CompletableFuture<T> implements ValueConsumer<T> {
+        private final CancellationCallback cancellationCallback;
+
+        private CompletableFutureValueConsumer(CancellationCallback cancellationCallback) {
+            this.cancellationCallback = cancellationCallback;
+        }
+
+        @Override
+        public void success(T value) {
+            complete(value);
+        }
+
+        @Override
+        public void failure(Throwable ex) {
+            if (ex instanceof CancellationException) {
+                cancel(true);
+            } else {
+                completeExceptionally(ex);
+            }
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            cancellationCallback.cancel(mayInterruptIfRunning);
+            return super.cancel(mayInterruptIfRunning);
+        }
+    }
+
+
+
+
     public static <T> CompletableFuture<T> createCompletableFuture(ValueSource<T> valueSource) {
         if (valueSource instanceof ListenableCompletableFutureWrapper) {
             return ((ListenableCompletableFutureWrapper<T>) valueSource).getWrappedFuture();
