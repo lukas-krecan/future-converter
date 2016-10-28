@@ -1,12 +1,12 @@
 /**
  * Copyright 2009-2016 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,15 +47,19 @@ public class GuavaFutureUtils {
         }
     }
 
-    public static <T> SettableFuture<T> createSettableFuture(Object origin) {
-        return new SettableListenableFuture<T>(origin);
+    public static <T> SettableListenableFuture<T> createSettableFuture(Object origin) {
+        return new SettableListenableFutureImpl<>(origin);
     }
 
-    private static class SettableListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T>, SettableFuture<T> {
+    public interface SettableListenableFuture<T> extends ListenableFuture<T>, SettableFuture<T> {
+
+    }
+
+    private static class SettableListenableFutureImpl<T> extends FutureWrapper<T> implements SettableListenableFuture<T> {
         private final Object origin;
         private Runnable cancellationCallback;
 
-        private SettableListenableFuture(Object origin) {
+        private SettableListenableFutureImpl(Object origin) {
             super(com.google.common.util.concurrent.SettableFuture.<T>create());
             this.origin = origin;
         }
@@ -83,9 +87,10 @@ public class GuavaFutureUtils {
         @Override
         public void setCancellationCallback(Runnable callback) {
             requireNonNull(callback);
-            if (cancellationCallback !=null){
+            if (cancellationCallback != null) {
                 throw new IllegalStateException("Cancellation callback can be set only once.");
-            };
+            }
+            ;
             cancellationCallback = callback;
         }
 
@@ -104,6 +109,7 @@ public class GuavaFutureUtils {
 
     private static class ListenableFutureCommonListenableWrapper<T> extends FutureWrapper<T> implements ListenableFuture<T> {
         private final ExecutionList executionList = new ExecutionList();
+
         ListenableFutureCommonListenableWrapper(AbstractCommonListenableFutureWrapper<T> wrapped) {
             super(wrapped);
             wrapped.addSuccessCallback(new CommonCallback<T>() {
@@ -170,5 +176,7 @@ public class GuavaFutureUtils {
         protected ListenableFuture<T> getWrappedFuture() {
             return (ListenableFuture<T>) super.getWrappedFuture();
         }
-    };
+    }
+
+    ;
 }

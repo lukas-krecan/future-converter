@@ -32,10 +32,6 @@ public class FutureConverter {
 
     /**
      * Converts Guava {@link com.google.common.util.concurrent.ListenableFuture} to Spring 4 {@link org.springframework.util.concurrent.ListenableFuture}
-     *
-     * @param guavaListenableFuture
-     * @param <T>
-     * @return
      */
     public static <T> ListenableFuture<T> toSpringListenableFuture(com.google.common.util.concurrent.ListenableFuture<T> guavaListenableFuture) {
         if (guavaListenableFuture instanceof GuavaListenableWrappingSpringListenableFuture) {
@@ -48,10 +44,6 @@ public class FutureConverter {
     /**
      * Converts Spring 4 {@link org.springframework.util.concurrent.ListenableFuture}
      * to Guava {@link com.google.common.util.concurrent.ListenableFuture}.
-     *
-     * @param springListenableFuture
-     * @param <T>
-     * @return
      */
     public static <T> com.google.common.util.concurrent.ListenableFuture<T> toGuavaListenableFuture(ListenableFuture<T> springListenableFuture) {
         if (springListenableFuture instanceof SpringListenableWrappingGuavaListenableFuture) {

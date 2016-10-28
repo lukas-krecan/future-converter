@@ -24,9 +24,6 @@ public class FutureConverter {
     /**
      * Converts {@link org.springframework.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
      * The original future is NOT canceled upon unsubscribe.* The original future is NOT canceled upon unsubscribe.
-     * @param listenableFuture
-     * @param <T>
-     * @return
      */
     public static <T> Single<T> toObservable(ListenableFuture<T> listenableFuture) {
         if (listenableFuture instanceof ObservableListenableFuture) {
@@ -40,16 +37,12 @@ public class FutureConverter {
     /**
      * Converts  {@link rx.Observable} to {@link org.springframework.util.concurrent.ListenableFuture}.
      * Modifies the original Observable and takes only the first value.
-     *
-     * @param observable
-     * @param <T>
-     * @return
      */
-    public static <T> ListenableFuture<T> toListenableFuture(Single<T> observable) {
-        if (observable instanceof ListenableFutureObservable) {
-            return ((ListenableFutureObservable<T>) observable).getListenableFuture();
+    public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
+        if (single instanceof ListenableFutureObservable) {
+            return ((ListenableFutureObservable<T>) single).getListenableFuture();
         } else {
-            return new ObservableListenableFuture<>(observable);
+            return new ObservableListenableFuture<>(single);
         }
     }
 

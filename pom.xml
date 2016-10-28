@@ -22,7 +22,7 @@
     </developers>
 
     <properties>
-        <targetSdk>1.7</targetSdk>
+        <targetSdk>1.8</targetSdk>
     </properties>
 
     <modules>
@@ -37,7 +37,6 @@
         <module>guava-rxjava</module>
         <module>spring-guava</module>
         <module>java8-guava</module>
-        <module>deprecated</module>
     </modules>
 
     <dependencies>
@@ -178,27 +177,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.2</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <version>1.13</version>
-                    <executions>
-                        <execution>
-                            <id>sniff</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <signature>
-                            <groupId>org.codehaus.mojo.signature</groupId>
-                            <artifactId>java17</artifactId>
-                            <version>1.0</version>
-                        </signature>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

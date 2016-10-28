@@ -15,10 +15,20 @@
  */
 package net.javacrumbs.futureconverter.common.internal;
 
+import java.util.function.Supplier;
+
 public interface OriginSource {
     /**
      * Source of the data for this Future. Used for transofrming back to the origin.
-     * @return
      */
     Object getOrigin();
+
+    public static <T> T getOriginOrElseGet(Object source, Class<T> clazz, Supplier<T> supplier) {
+        if (source instanceof OriginSource && clazz.isAssignableFrom(((OriginSource) source).getOrigin().getClass())) {
+            return (T) ((OriginSource) source).getOrigin();
+        } else {
+            return supplier.get();
+        }
+    }
+
 }
