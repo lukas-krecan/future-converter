@@ -61,7 +61,7 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
     }
 
     @Test
-    public void testConvertToObservableFinished() throws ExecutionException, InterruptedException {
+    public void testConvertToSingleFinished() throws ExecutionException, InterruptedException {
         T completable = originalFutureTestHelper.createFinishedFuture();
 
         Single<String> single = toSingle(completable);

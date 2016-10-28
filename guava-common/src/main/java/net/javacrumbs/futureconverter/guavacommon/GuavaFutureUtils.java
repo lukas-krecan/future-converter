@@ -21,47 +21,60 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import net.javacrumbs.futureconverter.common.FutureWrapper;
-import net.javacrumbs.futureconverter.common.internal.AbstractCommonListenableFutureWrapper;
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
-import net.javacrumbs.futureconverter.common.internal.SettableFuture;
+import net.javacrumbs.futureconverter.common.internal.ValueSource;
+import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;
 
 import java.util.concurrent.Executor;
 
-import static java.util.Objects.requireNonNull;
-
 
 public class GuavaFutureUtils {
-    public static <T> ListenableFuture<T> createListenableFuture(AbstractCommonListenableFutureWrapper<T> listenable) {
-        if (listenable instanceof CommonListenableListenableFutureWrapper) {
-            return ((CommonListenableListenableFutureWrapper<T>) listenable).getWrappedFuture();
+    /**
+     * Creates listenable future from ValueSourceFuture. We have to send all Future API calls to ValueSourceFuture.
+     */
+    public static <T> ListenableFuture<T> createListenableFuture(ValueSourceFuture<T> valueSource) {
+        if (valueSource instanceof ListenableFutureBackedValueSourceFuture) {
+            return ((ListenableFutureBackedValueSourceFuture<T>) valueSource).getWrappedFuture();
         } else {
-            return new ListenableFutureCommonListenableWrapper<T>(listenable);
+            return new ValueSourceFutureBackedListenableFuture<>(valueSource);
         }
     }
 
-    public static <T> AbstractCommonListenableFutureWrapper<T> createCommonListenable(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof ListenableFutureCommonListenableWrapper) {
-            return ((ListenableFutureCommonListenableWrapper<T>) listenableFuture).getWrappedFuture();
+    public static <T> ListenableFuture<T> createListenableFuture(ValueSource<T> valueSource) {
+        if (valueSource instanceof ListenableFutureBackedValueSourceFuture) {
+            return ((ListenableFutureBackedValueSourceFuture<T>) valueSource).getWrappedFuture();
         } else {
-            return new CommonListenableListenableFutureWrapper<T>(listenableFuture);
+            return new ValueSourceBackedListenableFuture<>(valueSource);
         }
     }
 
-    public static <T> SettableListenableFuture<T> createSettableFuture(Object origin) {
-        return new SettableListenableFutureImpl<>(origin);
+
+    public static <T> ValueSourceFuture<T> createValueSourceFuture(ListenableFuture<T> listenableFuture) {
+        if (listenableFuture instanceof ValueSourceFutureBackedListenableFuture) {
+            return ((ValueSourceFutureBackedListenableFuture<T>) listenableFuture).getWrappedFuture();
+        } else {
+            return new ListenableFutureBackedValueSourceFuture<>(listenableFuture);
+        }
     }
 
-    public interface SettableListenableFuture<T> extends ListenableFuture<T>, SettableFuture<T> {
-
+    public static <T> ValueSource<T> createValueSource(ListenableFuture<T> listenableFuture) {
+        if (listenableFuture instanceof ValueSourceBackedListenableFuture) {
+            return ((ValueSourceBackedListenableFuture<T>) listenableFuture).getValueSource();
+        } else {
+            return new ListenableFutureBackedValueSourceFuture<>(listenableFuture);
+        }
     }
 
-    private static class SettableListenableFutureImpl<T> extends FutureWrapper<T> implements SettableListenableFuture<T> {
-        private final Object origin;
-        private Runnable cancellationCallback;
+    /**
+     * If we only get ValueSource we have to create a ValueSourceFuture. //FXIME: remove
+     */
+    private static class ValueSourceBackedListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
+        private final ValueSource<T> valueSource;
 
-        private SettableListenableFutureImpl(Object origin) {
-            super(com.google.common.util.concurrent.SettableFuture.<T>create());
-            this.origin = origin;
+        private ValueSourceBackedListenableFuture(ValueSource<T> valueSource) {
+            super(com.google.common.util.concurrent.SettableFuture.create());
+            this.valueSource = valueSource;
+            valueSource.addCallbacks(value -> getWrappedFuture().set(value), ex -> getWrappedFuture().setException(ex));
         }
 
         @Override
@@ -74,61 +87,30 @@ public class GuavaFutureUtils {
             return (com.google.common.util.concurrent.SettableFuture<T>) super.getWrappedFuture();
         }
 
-        @Override
-        public void setResult(T value) {
-            getWrappedFuture().set(value);
-        }
-
-        @Override
-        public void setException(Throwable exception) {
-            getWrappedFuture().setException(exception);
-        }
-
-        @Override
-        public void setCancellationCallback(Runnable callback) {
-            requireNonNull(callback);
-            if (cancellationCallback != null) {
-                throw new IllegalStateException("Cancellation callback can be set only once.");
-            }
-            ;
-            cancellationCallback = callback;
-        }
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            cancellationCallback.run();
+            valueSource.cancel(mayInterruptIfRunning);
             return super.cancel(mayInterruptIfRunning);
         }
 
-        @Override
-        public Object getOrigin() {
-            return origin;
+        private ValueSource<T> getValueSource() {
+            return valueSource;
         }
     }
 
 
-    private static class ListenableFutureCommonListenableWrapper<T> extends FutureWrapper<T> implements ListenableFuture<T> {
+    private static class ValueSourceFutureBackedListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
         private final ExecutionList executionList = new ExecutionList();
 
-        ListenableFutureCommonListenableWrapper(AbstractCommonListenableFutureWrapper<T> wrapped) {
-            super(wrapped);
-            wrapped.addSuccessCallback(new CommonCallback<T>() {
-                @Override
-                public void process(T value) {
-                    executionList.execute();
-                }
-            });
-            wrapped.addFailureCallback(new CommonCallback<Throwable>() {
-                @Override
-                public void process(Throwable value) {
-                    executionList.execute();
-                }
-            });
+        ValueSourceFutureBackedListenableFuture(ValueSourceFuture<T> valueSourceFuture) {
+            super(valueSourceFuture);
+            valueSourceFuture.addCallbacks(value -> executionList.execute(), ex -> executionList.execute());
         }
 
         @Override
-        protected AbstractCommonListenableFutureWrapper<T> getWrappedFuture() {
-            return (AbstractCommonListenableFutureWrapper<T>) super.getWrappedFuture();
+        protected ValueSourceFuture<T> getWrappedFuture() {
+            return (ValueSourceFuture<T>) super.getWrappedFuture();
         }
 
         @Override
@@ -137,13 +119,16 @@ public class GuavaFutureUtils {
         }
     }
 
-    private static class CommonListenableListenableFutureWrapper<T> extends AbstractCommonListenableFutureWrapper<T> {
-        protected CommonListenableListenableFutureWrapper(ListenableFuture<T> wrappedFuture) {
+    /**
+     * Wraps ListenableFuture and exposes it as ValueSourceFuture.
+     */
+    private static class ListenableFutureBackedValueSourceFuture<T> extends ValueSourceFuture<T> {
+        private ListenableFutureBackedValueSourceFuture(ListenableFuture<T> wrappedFuture) {
             super(wrappedFuture);
         }
 
         @Override
-        public void addSuccessCallback(final CommonCallback<T> successCallback) {
+        public void addCallbacks(CommonCallback<T> successCallback, CommonCallback<Throwable> failureCallback) {
             Futures.addCallback(getWrappedFuture(), new FutureCallback<T>() {
                 @Override
                 public void onSuccess(T result) {
@@ -152,31 +137,16 @@ public class GuavaFutureUtils {
 
                 @Override
                 public void onFailure(Throwable t) {
-
-                }
-            }, MoreExecutors.directExecutor());
-        }
-
-        @Override
-        public void addFailureCallback(final CommonCallback<Throwable> failureCallback) {
-            Futures.addCallback(getWrappedFuture(), new FutureCallback<T>() {
-                @Override
-                public void onSuccess(T result) {
-
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
                     failureCallback.process(t);
+
                 }
             }, MoreExecutors.directExecutor());
         }
+
 
         @Override
         protected ListenableFuture<T> getWrappedFuture() {
             return (ListenableFuture<T>) super.getWrappedFuture();
         }
     }
-
-    ;
 }

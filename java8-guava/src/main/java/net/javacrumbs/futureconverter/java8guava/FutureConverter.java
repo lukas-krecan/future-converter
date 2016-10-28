@@ -16,10 +16,7 @@
 package net.javacrumbs.futureconverter.java8guava;
 
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
 import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
 
@@ -32,23 +29,15 @@ public class FutureConverter {
 
     /**
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link com.google.common.util.concurrent.ListenableFuture}.
-     *
-     * @param completableFuture
-     * @param <T>
-     * @return
      */
     public static <T> ListenableFuture<T> toListenableFuture(CompletableFuture<T> completableFuture) {
-        return GuavaFutureUtils.createListenableFuture(Java8FutureUtils.createCommonListenable(completableFuture));
+        return GuavaFutureUtils.createListenableFuture(Java8FutureUtils.createValueSourceFuture(completableFuture));
     }
 
     /**
      * Converts  {@link com.google.common.util.concurrent.ListenableFuture} to {@link java.util.concurrent.CompletableFuture}.
-     *
-     * @param listenableFuture
-     * @param <T>
-     * @return
      */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-        return Java8FutureUtils.createCompletableFuture(GuavaFutureUtils.createCommonListenable(listenableFuture));
+        return Java8FutureUtils.createCompletableFuture(GuavaFutureUtils.createValueSource(listenableFuture));
     }
 }

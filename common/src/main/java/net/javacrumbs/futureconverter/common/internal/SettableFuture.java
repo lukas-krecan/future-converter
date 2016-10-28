@@ -1,10 +1,10 @@
 package net.javacrumbs.futureconverter.common.internal;
 
 /**
- * Used for converting from Observable.
+ * Destination of events.
  * @param <T>
  */
-public interface SettableFuture<T> extends OriginSource {
+public interface SettableFuture<T> {
     void setResult(T value);
 
     void setException(Throwable exception);

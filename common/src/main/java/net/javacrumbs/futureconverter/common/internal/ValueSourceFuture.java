@@ -19,13 +19,8 @@ import net.javacrumbs.futureconverter.common.FutureWrapper;
 
 import java.util.concurrent.Future;
 
-public abstract class AbstractCommonListenableFutureWrapper<T> extends FutureWrapper<T> implements CommonListenable<T> {
-    protected AbstractCommonListenableFutureWrapper(Future<T> wrappedFuture) {
+public abstract class ValueSourceFuture<T> extends FutureWrapper<T> implements ValueSource<T> {
+    protected ValueSourceFuture(Future<T> wrappedFuture) {
         super(wrappedFuture);
-    }
-
-    @Override
-    public Future<T> getOrigin() {
-        return getWrappedFuture();
     }
 }

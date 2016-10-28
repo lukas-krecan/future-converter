@@ -16,9 +16,7 @@
 package net.javacrumbs.futureconverter.guavarx;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import net.javacrumbs.futureconverter.common.internal.OriginSource;
 import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
-import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils.SettableListenableFuture;
 import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
 import rx.Single;
 
@@ -29,11 +27,7 @@ public class FutureConverter {
      * The original future is NOT canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof OriginSource && ((OriginSource) listenableFuture).getOrigin() instanceof Single) {
-            return (Single<T>) ((OriginSource) listenableFuture).getOrigin();
-        } else {
-            return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createCommonListenable(listenableFuture));
-        }
+        return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createValueSource(listenableFuture));
     }
 
     /**
@@ -41,13 +35,6 @@ public class FutureConverter {
      * Modifies the original Observable and takes only the first value.
      */
     public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
-        if (single instanceof OriginSource && ((OriginSource) single).getOrigin() instanceof ListenableFuture) {
-            return (ListenableFuture<T>) ((OriginSource) single).getOrigin();
-        } else {
-            SettableListenableFuture<T> settableFuture = GuavaFutureUtils.createSettableFuture(single);
-            RxJavaFutureUtils.waitForResults(single, settableFuture);
-            return settableFuture;
-        }
+        return GuavaFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));
     }
-
 }

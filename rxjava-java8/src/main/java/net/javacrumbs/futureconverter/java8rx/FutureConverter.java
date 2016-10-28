@@ -15,8 +15,6 @@
  */
 package net.javacrumbs.futureconverter.java8rx;
 
-import net.javacrumbs.futureconverter.common.internal.OriginSource;
-import net.javacrumbs.futureconverter.common.internal.SettableFuture;
 import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
 import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
 import rx.Single;
@@ -33,13 +31,7 @@ public class FutureConverter {
      * only the first value produced by observable.
      */
     public static <T> CompletableFuture<T> toCompletableFuture(Single<T> single) {
-        if (single instanceof OriginSource && ((OriginSource) single).getOrigin() instanceof CompletableFuture) {
-            return (CompletableFuture<T>) ((OriginSource) single).getOrigin();
-        } else {
-            SettableFuture<T> completableFuture = Java8FutureUtils.createSettableFuture(single);
-            RxJavaFutureUtils.waitForResults(single, completableFuture);
-            return (CompletableFuture<T>) completableFuture;
-        }
+        return Java8FutureUtils.createCompletableFuture(RxJavaFutureUtils.createValueSource(single));
     }
 
     /**
@@ -47,11 +39,7 @@ public class FutureConverter {
      * The original future is NOT canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof OriginSource && ((OriginSource) completableFuture).getOrigin() instanceof Single) {
-            return (Single<T>) ((OriginSource) completableFuture).getOrigin();
-        } else {
-            return RxJavaFutureUtils.createSingle(Java8FutureUtils.createCommonListenable(completableFuture));
-        }
+        return RxJavaFutureUtils.createSingle(Java8FutureUtils.createValueSource(completableFuture));
     }
 }
 

@@ -1,12 +1,12 @@
 /**
  * Copyright 2009-2016 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,28 +15,36 @@
  */
 package net.javacrumbs.futureconverter.guavacommon;
 
-import net.javacrumbs.futureconverter.common.internal.AbstractCommonListenableFutureWrapper;
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
-import net.javacrumbs.futureconverter.common.internal.CommonListenable;
 import net.javacrumbs.futureconverter.common.internal.SettableFuture;
+import net.javacrumbs.futureconverter.common.internal.ValueSource;
+import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;
 
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
 
 public class Java8FutureUtils {
-    public static <T> CompletableFuture<T> createCompletableFuture(CommonListenable<T> commonListenable) {
-        if (commonListenable instanceof ListenableCompletableFutureWrapper) {
-            return ((ListenableCompletableFutureWrapper<T>) commonListenable).getWrappedFuture();
+    public static <T> CompletableFuture<T> createCompletableFuture(ValueSource<T> valueSource) {
+        if (valueSource instanceof ListenableCompletableFutureWrapper) {
+            return ((ListenableCompletableFutureWrapper<T>) valueSource).getWrappedFuture();
         } else {
-            return new CompletableFutureListenableWrapper<T>(commonListenable);
+            return new CompletableFutureListenableWrapper<T>(valueSource);
         }
     }
 
-    public static <T> AbstractCommonListenableFutureWrapper<T> createCommonListenable(CompletableFuture<T> completableFuture) {
+    public static <T> ValueSourceFuture<T> createValueSourceFuture(CompletableFuture<T> completableFuture) {
         if (completableFuture instanceof CompletableFutureListenableWrapper &&
-            ((CompletableFutureListenableWrapper<T>) completableFuture).getCommonListenable() instanceof AbstractCommonListenableFutureWrapper) {
-            return (AbstractCommonListenableFutureWrapper<T>) ((CompletableFutureListenableWrapper<T>) completableFuture).getCommonListenable();
+            ((CompletableFutureListenableWrapper<T>) completableFuture).getValueSource() instanceof ValueSourceFuture) {
+            return (ValueSourceFuture<T>) ((CompletableFutureListenableWrapper<T>) completableFuture).getValueSource();
+        } else {
+            return new ListenableCompletableFutureWrapper<>(completableFuture);
+        }
+    }
+
+    public static <T> ValueSource<T> createValueSource(CompletableFuture<T> completableFuture) {
+        if (completableFuture instanceof CompletableFutureListenableWrapper) {
+            return ((CompletableFutureListenableWrapper<T>) completableFuture).getValueSource();
         } else {
             return new ListenableCompletableFutureWrapper<>(completableFuture);
         }
@@ -67,9 +75,10 @@ public class Java8FutureUtils {
         @Override
         public void setCancellationCallback(Runnable callback) {
             requireNonNull(callback);
-            if (cancellationCallback !=null){
+            if (cancellationCallback != null) {
                 throw new IllegalStateException("Cancellation callback can be set only once.");
-            };
+            }
+            ;
             cancellationCallback = callback;
         }
 
@@ -85,41 +94,39 @@ public class Java8FutureUtils {
     }
 
     private static final class CompletableFutureListenableWrapper<T> extends CompletableFuture<T> {
-        private final CommonListenable<T> commonListenable;
+        private final ValueSource<T> valueSource;
 
-        public CompletableFutureListenableWrapper(CommonListenable<T> commonListenable) {
-            this.commonListenable = commonListenable;
-            commonListenable.addSuccessCallback(this::complete);
-            commonListenable.addFailureCallback(this::completeExceptionally);
+        public CompletableFutureListenableWrapper(ValueSource<T> valueSource) {
+            this.valueSource = valueSource;
+            valueSource.addCallbacks(this::complete, this::completeExceptionally);
         }
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            boolean result = commonListenable.cancel(mayInterruptIfRunning);
+            boolean result = valueSource.cancel(mayInterruptIfRunning);
             super.cancel(mayInterruptIfRunning);
             return result;
         }
 
-        public CommonListenable<T> getCommonListenable() {
-            return commonListenable;
+        public ValueSource<T> getValueSource() {
+            return valueSource;
         }
     }
 
-    private static final class ListenableCompletableFutureWrapper<T> extends AbstractCommonListenableFutureWrapper<T> {
+    private static final class ListenableCompletableFutureWrapper<T> extends ValueSourceFuture<T> {
         private ListenableCompletableFutureWrapper(CompletableFuture<T> completableFuture) {
             super(completableFuture);
         }
 
-        @Override
-        public void addSuccessCallback(CommonCallback<T> successCallback) {
-            getWrappedFuture().thenAccept(successCallback::process);
-        }
 
         @Override
-        public void addFailureCallback(CommonCallback<Throwable> failureCallback) {
-            getWrappedFuture().exceptionally(e -> {
-                failureCallback.process(e);
-                return null;
+        public void addCallbacks(CommonCallback<T> successCallback, CommonCallback<Throwable> failureCallback) {
+            getWrappedFuture().whenComplete((v, t) -> {
+                if (t == null) {
+                    successCallback.process(v);
+                } else {
+                    failureCallback.process(t);
+                }
             });
         }
 
