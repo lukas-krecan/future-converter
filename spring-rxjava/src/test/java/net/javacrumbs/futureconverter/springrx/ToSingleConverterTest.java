@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.java8rx;
+package net.javacrumbs.futureconverter.springrx;
 
-import net.javacrumbs.futureconverter.common.test.java8.Java8OriginalFutureTestHelper;
-import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToObservableConverterTest;
+import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToSingleConverterTest;
+import net.javacrumbs.futureconverter.common.test.spring.SpringOriginalFutureTestHelper;
+import org.springframework.util.concurrent.ListenableFuture;
 import rx.Single;
 
-import java.util.concurrent.CompletableFuture;
+public class ToSingleConverterTest extends AbstractFutureToSingleConverterTest<ListenableFuture<String>> {
 
-public class ToObservableConverterTest extends AbstractFutureToObservableConverterTest<CompletableFuture<String>> {
-    public ToObservableConverterTest() {
-        super(new Java8OriginalFutureTestHelper());
+    public ToSingleConverterTest() {
+        super(new SpringOriginalFutureTestHelper());
     }
 
     @Override
-    protected Single<String> toSingle(CompletableFuture<String> future) {
+    protected Single<String> toSingle(ListenableFuture<String> future) {
         return FutureConverter.toSingle(future);
     }
 
     @Override
-    protected CompletableFuture<String> toFuture(Single<String> observable) {
-        return FutureConverter.toCompletableFuture(observable);
+    protected ListenableFuture<String> toFuture(Single<String> single) {
+        return FutureConverter.toListenableFuture(single);
     }
 }

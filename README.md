@@ -87,8 +87,7 @@ And then use
 Since version 1.0.0 we are using rx.Single for integration with RxJava
 
 Please note that
-* When converting a Future to a Single, it's not clear what should happen upon unsubscribe. Since version 0.2.2 RxJava support does
-not cancel the Future, since there is no good place to keep track of the subscriptions (there may be multiple subscriptions for any given Future).
+* When converting a Future to a Single, we cancle the original future on unsubscribe. If tou need the feature to continue running, use something like `single.toObservable().publish().refCount().toSingle()`
 * Converting Single to a Future registers exactly one subscription which is unsubscribed upon Future cancellation.
 
 # rxjava-java8

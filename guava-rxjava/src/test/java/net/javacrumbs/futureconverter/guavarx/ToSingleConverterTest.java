@@ -17,12 +17,12 @@ package net.javacrumbs.futureconverter.guavarx;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import net.javacrumbs.futureconverter.common.test.guava.GuavaOriginalFutureTestHelper;
-import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToObservableConverterTest;
+import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToSingleConverterTest;
 import rx.Single;
 
-public class ToObservableConverterTest extends AbstractFutureToObservableConverterTest<ListenableFuture<String>> {
+public class ToSingleConverterTest extends AbstractFutureToSingleConverterTest<ListenableFuture<String>> {
 
-    public ToObservableConverterTest() {
+    public ToSingleConverterTest() {
         super(new GuavaOriginalFutureTestHelper());
     }
 

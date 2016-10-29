@@ -23,7 +23,6 @@ import rx.Subscription;
 import rx.functions.Action0;
 import rx.functions.Action1;
 
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -33,12 +32,12 @@ import java.util.concurrent.Future;
 import static net.javacrumbs.futureconverter.common.test.AbstractConverterTest.VALUE;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public abstract class AbstractFutureToObservableConverterTest<T extends Future<String>> {
+public abstract class AbstractFutureToSingleConverterTest<T extends Future<String>> {
 
 
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -47,7 +46,7 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
 
     private final OriginalFutureTestHelper<T> originalFutureTestHelper;
 
-    protected AbstractFutureToObservableConverterTest(OriginalFutureTestHelper<T> originalFutureTestHelper) {
+    protected AbstractFutureToSingleConverterTest(OriginalFutureTestHelper<T> originalFutureTestHelper) {
         this.originalFutureTestHelper = originalFutureTestHelper;
     }
 
@@ -152,10 +151,31 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
     }
 
     @Test
-    public void oneSubscriptionShouldNotCancelFuture() throws ExecutionException, InterruptedException {
+    public void unsubscribeShouldCancelTheFuture() throws InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
         Single<String> single = toSingle(future);
+        Action1<String> onSuccess = mockAction();
+        Action1<Throwable> onError = mockAction();
+
+        verifyZeroInteractions(onSuccess);
+        verifyZeroInteractions(onError);
+
+        single.subscribe(v -> {
+        }).unsubscribe();
+
+        assertTrue(future.isCancelled());
+
+        //wait for the result
+        verifyZeroInteractions(onSuccess);
+        verifyZeroInteractions(onError);
+    }
+
+    @Test
+    public void oneSubscriptionShouldNotCancelFuture() throws ExecutionException, InterruptedException {
+        T future = originalFutureTestHelper.createRunningFuture();
+
+        Single<String> single = toSingle(future).toObservable().publish().refCount().toSingle();
         Action1<String> onSuccess = mockAction();
         Action1<Throwable> onError = mockAction();
 
@@ -247,9 +267,8 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         verify(onError).call(exception);
     }
 
-
     @Test
-    public void testConvertToCompletableException() throws ExecutionException, InterruptedException {
+    public void testRethrowException() throws ExecutionException, InterruptedException {
         doTestException(new RuntimeException("test"));
     }
 
@@ -271,6 +290,6 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
 
         //wait for the result
         verifyZeroInteractions(onSuccess);
-        verify(onError).call(any(CompletionException.class));
+        verify(onError).call(exception);
     }
 }
