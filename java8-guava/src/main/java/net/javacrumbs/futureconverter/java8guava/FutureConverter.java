@@ -38,6 +38,6 @@ public class FutureConverter {
      * Converts  {@link com.google.common.util.concurrent.ListenableFuture} to {@link java.util.concurrent.CompletableFuture}.
      */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-        return Java8FutureUtils.createCompletableFuture(GuavaFutureUtils.createValueSource(listenableFuture));
+        return Java8FutureUtils.createCompletableFuture(GuavaFutureUtils.createValueSourceFuture(listenableFuture));
     }
 }

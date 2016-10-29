@@ -103,6 +103,9 @@ public class Java8FutureUtils {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
+            if (isDone()) {
+                return false;
+            }
             boolean result = valueSource.cancel(mayInterruptIfRunning);
             super.cancel(mayInterruptIfRunning);
             return result;

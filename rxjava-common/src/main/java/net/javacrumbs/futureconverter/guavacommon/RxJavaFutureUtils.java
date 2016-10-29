@@ -17,7 +17,9 @@ package net.javacrumbs.futureconverter.guavacommon;
 
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
+import rx.Observable;
 import rx.Single;
+import rx.Subscription;
 
 public class RxJavaFutureUtils {
     public static <T> Single<T> createSingle(ValueSource<T> valueSource) {
@@ -37,6 +39,7 @@ public class RxJavaFutureUtils {
 
     private static class SingleBackedValueSource<T> implements ValueSource<T> {
         private final Single<T> single;
+        private Subscription subscription;
 
         private SingleBackedValueSource(Single<T> single) {
             this.single = single;
@@ -44,15 +47,20 @@ public class RxJavaFutureUtils {
 
         @Override
         public void addCallbacks(CommonCallback<T> successCallback, CommonCallback<Throwable> failureCallback) {
-            single.subscribe(successCallback::process, failureCallback::process);
+            if (subscription == null) {
+                subscription = single.subscribe(successCallback::process, failureCallback::process);
+            } else {
+                throw new IllegalStateException("add callbacks can be called only once");
+            }
         }
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            return false;
+            subscription.unsubscribe();
+            return true;
         }
 
-        public Single<T> getSingle() {
+        private Single<T> getSingle() {
             return single;
         }
     }
