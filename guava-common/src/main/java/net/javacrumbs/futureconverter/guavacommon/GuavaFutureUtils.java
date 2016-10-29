@@ -28,17 +28,26 @@ import net.javacrumbs.futureconverter.common.internal.ValueConsumer;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;
 
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 
 public class GuavaFutureUtils {
-    public static <T> ListenableFutureValueConsumerImpl<T> createListenableFuture(CancellationCallback cancellationCallback) {
-        return new ListenableFutureValueConsumerImpl<>(cancellationCallback);
+    public static <T> ListenableFutureValueConsumer<T> createListenableFuture() {
+        return new ListenableFutureValueConsumer<>();
     }
 
-    public static <T, S extends ValueConsumer<T>> S registerListeners(ListenableFuture<T> listenableFuture, S valueConsumer) {
+    public static <T> ListenableFuture<T> registerCancellationCallback(ListenableFuture<T> listenableFuture, CancellationCallback cancellationCallback) {
+        return new ListenableFutureCancellationWrapper<>(listenableFuture, cancellationCallback);
+    }
+
+    public static <T> Optional<ListenableFuture<T>> getWrappedOriginalFuture(Object object) {
+        return null;
+    }
+
+    public static <T> CancellationCallback registerListeners(ListenableFuture<T> listenableFuture, ValueConsumer<T> valueConsumer) {
         listenableFuture.addListener(() -> {
                 try {
                     valueConsumer.success(listenableFuture.get());
@@ -50,17 +59,13 @@ public class GuavaFutureUtils {
             },
             MoreExecutors.directExecutor()
         );
-
-        return valueConsumer;
+        return listenableFuture::cancel;
     }
 
-    private static class ListenableFutureValueConsumerImpl<T> extends FutureWrapper<T> implements ListenableFuture<T>, ValueConsumer<T> {
+    public static class ListenableFutureValueConsumer<T> extends FutureWrapper<T> implements ListenableFuture<T>, ValueConsumer<T> {
 
-        private final CancellationCallback cancellationCallback;
-
-        private ListenableFutureValueConsumerImpl(CancellationCallback cancellationCallback) {
+        private ListenableFutureValueConsumer() {
             super(SettableFuture.create());
-            this.cancellationCallback = cancellationCallback;
         }
 
         @Override
@@ -85,6 +90,31 @@ public class GuavaFutureUtils {
         @Override
         protected SettableFuture<T> getWrappedFuture() {
             return (SettableFuture<T>) super.getWrappedFuture();
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return super.cancel(mayInterruptIfRunning);
+        }
+    }
+
+    private static class ListenableFutureCancellationWrapper<T> extends FutureWrapper<T> implements ListenableFuture<T> {
+
+        private final CancellationCallback cancellationCallback;
+
+        private ListenableFutureCancellationWrapper(ListenableFuture<T> wrappedFuture, CancellationCallback cancellationCallback) {
+            super(wrappedFuture);
+            this.cancellationCallback = cancellationCallback;
+        }
+
+        @Override
+        public void addListener(Runnable listener, Executor executor) {
+            getWrappedFuture().addListener(listener, executor);
+        }
+
+        @Override
+        protected ListenableFuture<T> getWrappedFuture() {
+            return (ListenableFuture<T>) super.getWrappedFuture();
         }
 
         @Override

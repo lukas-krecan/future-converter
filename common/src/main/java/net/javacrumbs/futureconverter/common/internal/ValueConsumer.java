@@ -16,6 +16,6 @@
 package net.javacrumbs.futureconverter.common.internal;
 
 public interface ValueConsumer<T> {
-    public void success(T value);
-    public void failure(Throwable ex);
+    void success(T value);
+    void failure(Throwable ex);
 }

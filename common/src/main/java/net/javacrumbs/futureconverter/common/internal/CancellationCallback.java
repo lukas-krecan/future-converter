@@ -19,5 +19,9 @@ package net.javacrumbs.futureconverter.common.internal;
  * Cancels original Future when the new one is cancelled.
  */
 public interface CancellationCallback {
+    CancellationCallback NULL_CANCELLATION_CALLBACK = ignore -> {};
+
     void cancel(boolean mayInterruptIfRunning);
+
+
 }

@@ -28,11 +28,11 @@ import java.util.concurrent.CompletableFuture;
 import static java.util.Objects.requireNonNull;
 
 public class Java8FutureUtils {
-    public static <T> CompletableFutureValueConsumer<T> createCompletableFuture(CancellationCallback cancellationCallback) {
-        return new CompletableFutureValueConsumer<>(cancellationCallback);
+    public static <T> CompletableFutureValueConsumer<T> createCompletableFuture() {
+        return new CompletableFutureValueConsumer<>();
     }
 
-    public static <T, S extends ValueConsumer<T>> S registerListeners(CompletableFuture<T> completableFuture, S valueConsumer) {
+    public static <T> CancellationCallback registerListeners(CompletableFuture<T> completableFuture, ValueConsumer<T> valueConsumer) {
         completableFuture.whenComplete((v, t) -> {
            if (t == null) {
                valueConsumer.success(v);
@@ -40,16 +40,20 @@ public class Java8FutureUtils {
                valueConsumer.failure(t);
            }
         });
-        return valueConsumer;
+        return completableFuture::cancel;
     }
 
-    private static class CompletableFutureValueConsumer<T> extends CompletableFuture<T> implements ValueConsumer<T> {
-        private final CancellationCallback cancellationCallback;
+    public static <T> CompletableFuture<T> registerCancellationCallback(CompletableFutureValueConsumer<T> completableFuture, CancellationCallback cancellationCallback) {
+        // Creates new CompletableFuture, we want to use the original one
+        completableFuture.whenComplete((v, t) -> {
+            if (t instanceof CancellationException) {
+                cancellationCallback.cancel(true);
+            }
+        });
+        return completableFuture;
+    }
 
-        private CompletableFutureValueConsumer(CancellationCallback cancellationCallback) {
-            this.cancellationCallback = cancellationCallback;
-        }
-
+    public static class CompletableFutureValueConsumer<T> extends CompletableFuture<T> implements ValueConsumer<T> {
         @Override
         public void success(T value) {
             complete(value);
@@ -66,13 +70,9 @@ public class Java8FutureUtils {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            cancellationCallback.cancel(mayInterruptIfRunning);
             return super.cancel(mayInterruptIfRunning);
         }
     }
-
-
-
 
     public static <T> CompletableFuture<T> createCompletableFuture(ValueSource<T> valueSource) {
         if (valueSource instanceof ListenableCompletableFutureWrapper) {

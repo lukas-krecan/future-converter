@@ -16,8 +16,11 @@
 package net.javacrumbs.futureconverter.guavarx;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import net.javacrumbs.futureconverter.common.internal.CancellationCallback;
 import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils.ListenableFutureValueConsumer;
 import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils.SingleWrappingValueConsumer;
 import rx.Single;
 
 public class FutureConverter {
@@ -27,7 +30,9 @@ public class FutureConverter {
      * The original future is NOT canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
-        return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createValueSource(listenableFuture));
+        SingleWrappingValueConsumer<T> valueConsumer = RxJavaFutureUtils.createSingleWrappingValueConsumer();
+        GuavaFutureUtils.registerListeners(listenableFuture, valueConsumer);
+        return valueConsumer.getSingle();
     }
 
     /**
@@ -35,6 +40,8 @@ public class FutureConverter {
      * Modifies the original Observable and takes only the first value.
      */
     public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
-        return GuavaFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));
+        ListenableFutureValueConsumer<T> listenableFuture = GuavaFutureUtils.createListenableFuture();
+        CancellationCallback cancellationCallback = RxJavaFutureUtils.registerListeners(single, listenableFuture);
+        return GuavaFutureUtils.registerCancellationCallback(listenableFuture, cancellationCallback);
     }
 }

@@ -15,11 +15,68 @@
  */
 package net.javacrumbs.futureconverter.guavacommon;
 
+import net.javacrumbs.futureconverter.common.internal.CancellationCallback;
 import net.javacrumbs.futureconverter.common.internal.CommonCallback;
+import net.javacrumbs.futureconverter.common.internal.ValueConsumer;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import rx.Single;
+import rx.Subscription;
+
+import java.util.concurrent.CompletableFuture;
 
 public class RxJavaFutureUtils {
+
+    public static <T> SingleWrappingValueConsumer<T> createSingleWrappingValueConsumer() {
+        return new SingleWrappingValueConsumer<>();
+    }
+
+    public static <T> CancellationCallback registerListeners(Single<T> single, ValueConsumer<T> valueConsumer) {
+        Subscription subscription = single.subscribe(valueConsumer::success, valueConsumer::failure);
+        return ignore -> subscription.unsubscribe();
+    }
+
+
+    public static class SingleWrappingValueConsumer<T> implements ValueConsumer<T> {
+        private final Single<T> single;
+        //FIXME: There has to be a better way
+        private final CompletableFuture<T> valueHolder = new CompletableFuture<>();
+
+        private SingleWrappingValueConsumer() {
+            single = Single.create(
+                singleSubscriber -> valueHolder.whenComplete(
+                    (v, t) -> {
+                        if (!singleSubscriber.isUnsubscribed()) {
+                            if (t == null) {
+                                try {
+                                    singleSubscriber.onSuccess(v);
+                                } catch (Throwable ex) {
+                                    singleSubscriber.onError(ex);
+                                }
+                            } else {
+                                singleSubscriber.onError(t);
+                            }
+                        }
+                    }
+                )
+            );
+        }
+
+        @Override
+        public void success(T value) {
+            valueHolder.complete(value);
+        }
+
+        @Override
+        public void failure(Throwable ex) {
+            valueHolder.completeExceptionally(ex);
+        }
+
+        public Single<T> getSingle() {
+            return single;
+        }
+    }
+
+
     public static <T> Single<T> createSingle(ValueSource<T> valueSource) {
         if (valueSource instanceof SingleBackedValueSource) {
             return ((SingleBackedValueSource<T>) valueSource).getSingle();
