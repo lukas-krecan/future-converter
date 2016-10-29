@@ -16,41 +16,25 @@
 package net.javacrumbs.futureconverter.guavarx;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import rx.Observable;
+import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
+import rx.Single;
 
 public class FutureConverter {
 
     /**
-     * Converts {@link com.google.common.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
+     * Converts {@link com.google.common.util.concurrent.ListenableFuture} to  {@link rx.Single}.
      * The original future is NOT canceled upon unsubscribe.
-     *
-     * @param listenableFuture
-     * @param <T>
-     * @return
      */
-    public static <T> Observable<T> toObservable(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof ObservableListenableFuture) {
-            return ((ObservableListenableFuture<T>) listenableFuture).getObservable();
-        } else {
-            return new ListenableFutureObservable<>(listenableFuture);
-        }
-
+    public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
+        return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createValueSource(listenableFuture));
     }
 
     /**
      * Converts  {@link rx.Observable} to {@link com.google.common.util.concurrent.ListenableFuture}.
      * Modifies the original Observable and takes only the first value.
-     *
-     * @param observable
-     * @param <T>
-     * @return
      */
-    public static <T> ListenableFuture<T> toListenableFuture(Observable<T> observable) {
-        if (observable instanceof ListenableFutureObservable) {
-            return ((ListenableFutureObservable<T>) observable).getListenableFuture();
-        } else {
-            return new ObservableListenableFuture<>(observable);
-        }
+    public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
+        return GuavaFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));
     }
-
 }

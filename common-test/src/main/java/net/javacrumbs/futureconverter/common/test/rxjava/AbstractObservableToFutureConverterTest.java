@@ -18,8 +18,8 @@ package net.javacrumbs.futureconverter.common.test.rxjava;
 import net.javacrumbs.futureconverter.common.test.ConvertedFutureTestHelper;
 import org.junit.After;
 import org.junit.Test;
-import rx.Observable;
-import rx.Subscriber;
+import rx.Single;
+import rx.SingleSubscriber;
 import rx.schedulers.TestScheduler;
 import rx.subjects.TestSubject;
 import rx.subscriptions.Subscriptions;
@@ -56,9 +56,9 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
         this.convertedFutureTestHelper = convertedFutureTestHelper;
     }
 
-    protected abstract T toFuture(Observable<String> observable);
+    protected abstract T toFuture(Single<String> single);
 
-    protected abstract Observable<String> toObservable(T future);
+    protected abstract Single<String> toSingle(T future);
 
     @After
     public void cleanup() {
@@ -69,8 +69,8 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
     @Test
     public void testConvertToFutureCompleted() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(new String[]{VALUE});
-        T future = toFuture(observable);
+        Single<String> single = Single.just(VALUE);
+        T future = toFuture(single);
 
         convertedFutureTestHelper.addCallbackTo(future);
 
@@ -79,24 +79,12 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
         assertEquals(false, future.isCancelled());
         convertedFutureTestHelper.verifyCallbackCalledWithCorrectValue();
 
-        assertSame(observable, toObservable(future));
-    }
-
-    @Test
-    public void testMultipleValues() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(new String[]{VALUE, "value2"});
-        T future = toFuture(observable);
-        try {
-            future.get();
-            fail("Exception expected");
-        } catch (ExecutionException e) {
-            assertEquals(IllegalArgumentException.class, e.getCause().getClass());
-        }
+        assertSame(single, toSingle(future));
     }
 
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
-        Observable<String> observable = createAsyncObservable();
+        Single<String> observable = createAsyncSingle();
         T future = toFuture(observable);
 
         assertEquals(false, future.isDone());
@@ -116,9 +104,9 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
     @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
-        Observable<String> observable = createAsyncObservable();
+        Single<String> single = createAsyncSingle();
 
-        T future = toFuture(observable);
+        T future = toFuture(single);
 
         taskStartedLatch.await(); //wait for the task to start
         getWorkerFuture().cancel(true);
@@ -139,7 +127,7 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
     @Test
     public void shouldEndExceptionallyIfObservableFailsBeforeConversion() throws InterruptedException {
         RuntimeException exception = new RuntimeException("test");
-        Observable<String> observable = Observable.error(exception);
+        Single<String> observable = Single.error(exception);
 
 
         T future = toFuture(observable);
@@ -156,7 +144,7 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
     @Test
     public void testCancelNew() throws ExecutionException, InterruptedException {
-        Observable<String> observable = createAsyncObservable();
+        Single<String> observable = createAsyncSingle();
 
         T future = toFuture(observable);
         assertTrue(future.cancel(true));
@@ -176,23 +164,23 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
     @Test
     public void cancelShouldUnsubscribe() {
-        TestSubject<String> observable = TestSubject.create(new TestScheduler());
-        assertFalse(observable.hasObservers());
+        TestSubject<String> single = TestSubject.create(new TestScheduler());
+        assertFalse(single.hasObservers());
 
-        T future = toFuture(observable);
-        assertTrue(observable.hasObservers());
+        T future = toFuture(single.toSingle());
+        assertTrue(single.hasObservers());
 
         future.cancel(true);
 
-        assertFalse(observable.hasObservers());
+        assertFalse(single.hasObservers());
     }
 
 
     @Test
     public void testCancelCompleted() throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.from(new String[]{VALUE});
+        Single<String> single = Single.just(VALUE);
 
-        T future = toFuture(observable);
+        T future = toFuture(single);
         assertFalse(future.cancel(true));
 
         assertEquals(VALUE, future.get());
@@ -201,7 +189,6 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
         assertFalse(future.isCancelled());
     }
 
-    //
     @Test
     public void testRuntimeException() throws ExecutionException, InterruptedException {
         doTestException(new RuntimeException("test"));
@@ -214,7 +201,7 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
 
 
     private void doTestException(final Exception exception) throws ExecutionException, InterruptedException {
-        Observable<String> observable = Observable.create((Subscriber<? super String> subscriber) -> subscriber.onError(exception));
+        Single<String> observable = Single.create((SingleSubscriber<? super String> subscriber) -> subscriber.onError(exception));
 
         T future = toFuture(observable);
         try {
@@ -225,15 +212,14 @@ public abstract class AbstractObservableToFutureConverterTest<T extends Future<S
     }
 
 
-    private Observable<String> createAsyncObservable() {
-        return Observable.create((Subscriber<? super String> subscriber) -> {
+    private Single<String> createAsyncSingle() {
+        return Single.create((SingleSubscriber<? super String> subscriber) -> {
             subscribed.incrementAndGet();
             Future<?> future = executorService.submit(() -> {
                 try {
                     taskStartedLatch.countDown();
                     waitLatch.await();
-                    subscriber.onNext(VALUE);
-                    subscriber.onCompleted();
+                    subscriber.onSuccess(VALUE);
                 } catch (InterruptedException e) {
                     subscriber.onError(e);
                     throw new RuntimeException(e);

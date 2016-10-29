@@ -1,3 +1,8 @@
+## 1.0.0
+* Observables changed to rx.Single
+* Model refactored to make it extensible
+* Requires Java 8
+
 ## 0.3.1
 * ObservableListenableFuture simplified
 

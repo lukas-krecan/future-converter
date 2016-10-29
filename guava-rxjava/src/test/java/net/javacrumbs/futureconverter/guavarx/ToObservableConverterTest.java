@@ -18,7 +18,7 @@ package net.javacrumbs.futureconverter.guavarx;
 import com.google.common.util.concurrent.ListenableFuture;
 import net.javacrumbs.futureconverter.common.test.guava.GuavaOriginalFutureTestHelper;
 import net.javacrumbs.futureconverter.common.test.rxjava.AbstractFutureToObservableConverterTest;
-import rx.Observable;
+import rx.Single;
 
 public class ToObservableConverterTest extends AbstractFutureToObservableConverterTest<ListenableFuture<String>> {
 
@@ -27,12 +27,12 @@ public class ToObservableConverterTest extends AbstractFutureToObservableConvert
     }
 
     @Override
-    protected Observable<String> toObservable(ListenableFuture<String> future) {
-        return FutureConverter.toObservable(future);
+    protected Single<String> toSingle(ListenableFuture<String> future) {
+        return FutureConverter.toSingle(future);
     }
 
     @Override
-    protected ListenableFuture<String> toFuture(Observable<String> observable) {
+    protected ListenableFuture<String> toFuture(Single<String> observable) {
         return FutureConverter.toListenableFuture(observable);
     }
 }

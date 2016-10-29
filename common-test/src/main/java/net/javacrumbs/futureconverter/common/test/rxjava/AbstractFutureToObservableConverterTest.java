@@ -1,12 +1,12 @@
 /**
  * Copyright 2009-2015 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package net.javacrumbs.futureconverter.common.test.rxjava;
 import net.javacrumbs.futureconverter.common.test.OriginalFutureTestHelper;
 import org.junit.After;
 import org.junit.Test;
-import rx.Observable;
+import rx.Single;
 import rx.Subscription;
 import rx.functions.Action0;
 import rx.functions.Action1;
@@ -51,9 +51,9 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         this.originalFutureTestHelper = originalFutureTestHelper;
     }
 
-    protected abstract Observable<String> toObservable(T future);
+    protected abstract Single<String> toSingle(T future);
 
-    protected abstract T toFuture(Observable<String> observable);
+    protected abstract T toFuture(Single<String> observable);
 
     @After
     public void cleanup() {
@@ -61,86 +61,82 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
     }
 
     @Test
-    public void testConvertToObservableFinished() throws ExecutionException, InterruptedException {
+    public void testConvertToSingleFinished() throws ExecutionException, InterruptedException {
         T completable = originalFutureTestHelper.createFinishedFuture();
 
-        Observable<String> observable = toObservable(completable);
-        Action1<String> onNext = mockAction();
+        Single<String> single = toSingle(completable);
+        Action1<String> onSuccess = mockAction();
         Action1<Throwable> onError = mockAction();
-        final Action0 onComplete = mock(Action0.class);
 
-        observable.subscribe(onNext, onError, () -> {
-            onComplete.call();
-            latch.countDown();
-        });
+        single.subscribe(v -> {
+                onSuccess.call(v);
+                latch.countDown();
+            },
+            onError);
 
         latch.await();
 
-        verify(onNext).call(VALUE);
+        verify(onSuccess).call(VALUE);
         verifyZeroInteractions(onError);
-        verify(onComplete).call();
 
-        assertSame(completable, toFuture(observable));
+        assertSame(completable, toFuture(single));
     }
 
     @Test
     public void testRun() throws ExecutionException, InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
-        Observable<String> observable = toObservable(future);
-        Action1<String> onNext = mockAction();
+        Single<String> single = toSingle(future);
+        Action1<String> onSuccess = mockAction();
         Action1<Throwable> onError = mockAction();
-        final Action0 onComplete = mock(Action0.class);
 
-        observable.subscribe(onNext, onError, () -> {
-            onComplete.call();
-            latch.countDown();
-        });
-        verifyZeroInteractions(onNext);
+        single.subscribe(v -> {
+                onSuccess.call(v);
+                latch.countDown();
+            },
+            onError);
+        verifyZeroInteractions(onSuccess);
         verifyZeroInteractions(onError);
-        verifyZeroInteractions(onComplete);
 
         originalFutureTestHelper.finishRunningFuture();
         latch.await();
 
         //wait for the result
-        verify(onNext).call(VALUE);
+        verify(onSuccess).call(VALUE);
         verifyZeroInteractions(onError);
-        verify(onComplete).call();
     }
 
     @Test
     public void testMultipleSubscribers() throws ExecutionException, InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
-        Observable<String> observable = toObservable(future);
+        Single<String> single = toSingle(future);
         CountDownLatch latch = new CountDownLatch(2);
 
-        Action1<String> onNext1 = mockAction();
+        Action1<String> onSuccess1 = mockAction();
         Action1<Throwable> onError1 = mockAction();
-        final Action0 onComplete1 = mock(Action0.class);
 
         // first subscription
-        observable.subscribe(onNext1, onError1, () -> {
-            onComplete1.call();
-            latch.countDown();
-        });
-        verifyZeroInteractions(onNext1);
+        single.subscribe(v -> {
+                onSuccess1.call(v);
+                latch.countDown();
+            },
+            onError1);
+        verifyZeroInteractions(onSuccess1);
         verifyZeroInteractions(onError1);
-        verifyZeroInteractions(onComplete1);
 
         // second subscription
-        Action1<String> onNext2 = mockAction();
+        Action1<String> onSuccess2 = mockAction();
         Action1<Throwable> onError2 = mockAction();
-        final Action0 onComplete2 = mock(Action0.class);
 
-        observable.subscribe(onNext2, onError2, () -> {
-            onComplete2.call();
-            latch.countDown();
-        });
-        verifyZeroInteractions(onNext2);
+
+        single.subscribe(v -> {
+                onSuccess2.call(v);
+                latch.countDown();
+            },
+            onError2);
+        verifyZeroInteractions(onSuccess2);
         verifyZeroInteractions(onError2);
-        verifyZeroInteractions(onComplete2);
 
 
         originalFutureTestHelper.finishRunningFuture();
@@ -148,59 +144,55 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         //wait for the result
         latch.await();
 
-        verify(onNext1).call(VALUE);
+        verify(onSuccess1).call(VALUE);
         verifyZeroInteractions(onError1);
-        verify(onComplete1).call();
 
-        verify(onNext2).call(VALUE);
+        verify(onSuccess2).call(VALUE);
         verifyZeroInteractions(onError2);
-        verify(onComplete2).call();
     }
 
     @Test
     public void oneSubscriptionShouldNotCancelFuture() throws ExecutionException, InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
-        Observable<String> observable = toObservable(future);
-        Action1<String> onNext = mockAction();
+        Single<String> single = toSingle(future);
+        Action1<String> onSuccess = mockAction();
         Action1<Throwable> onError = mockAction();
-        final Action0 onComplete = mock(Action0.class);
 
-        observable.subscribe(onNext, onError, () -> {
-            onComplete.call();
+        single.subscribe(v -> {
+            onSuccess.call(v);
             latch.countDown();
-        });
-        verifyZeroInteractions(onNext);
+        }, onError);
+        verifyZeroInteractions(onSuccess);
         verifyZeroInteractions(onError);
-        verifyZeroInteractions(onComplete);
 
-        observable.subscribe(v -> {}).unsubscribe();
+        single.subscribe(v -> {
+        }).unsubscribe();
 
         originalFutureTestHelper.finishRunningFuture();
         latch.await();
 
         //wait for the result
-        verify(onNext).call(VALUE);
+        verify(onSuccess).call(VALUE);
         verifyZeroInteractions(onError);
-        verify(onComplete).call();
     }
 
     @Test
     public void testCancelOriginal() throws ExecutionException, InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
-        Observable<String> observable = toObservable(future);
+        Single<String> single = toSingle(future);
         Action1<String> onNext = mockAction();
         final Action1<Throwable> onError = mockAction();
         Action0 onComplete = mock(Action0.class);
 
 
-        observable.subscribe(
-                onNext,
-                t -> {
-                    onError.call(t);
-                    latch.countDown();
-                }
+        single.subscribe(
+            onNext,
+            t -> {
+                onError.call(t);
+                latch.countDown();
+            }
         );
         future.cancel(true);
 
@@ -220,15 +212,13 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
     public void testUnsubscribe() throws ExecutionException, InterruptedException {
         T future = originalFutureTestHelper.createRunningFuture();
 
-        Observable<String> observable = toObservable(future);
-        Action1<String> onNext = mockAction();
+        Single<String> single = toSingle(future);
+        Action1<String> onSuccess = mockAction();
         Action1<Throwable> onError = mockAction();
-        Action0 onComplete = mock(Action0.class);
 
-        Subscription subscription = observable.subscribe(
-                onNext,
-                onError,
-                onComplete
+        Subscription subscription = single.subscribe(
+            onSuccess,
+            onError
         );
 
         subscription.unsubscribe();
@@ -237,19 +227,22 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
         originalFutureTestHelper.finishRunningFuture();
         Thread.sleep(10); //do not know how to wait for something to not happen
 
-        verifyZeroInteractions(onNext);
+        verifyZeroInteractions(onSuccess);
         verifyZeroInteractions(onError);
-        verifyZeroInteractions(onComplete);
     }
 
     @Test
     public void shouldPropagateExceptionFromObserver() {
         T future = originalFutureTestHelper.createFinishedFuture();
 
-        Observable<String> observable = toObservable(future);
+        Single<String> single = toSingle(future);
         Action1<Throwable> onError = mockAction();
         RuntimeException exception = new RuntimeException("Test");
-        observable.subscribe(val -> {throw exception;}, onError);
+        single.subscribe(val -> {
+                throw exception;
+            },
+            onError
+        );
 
         verify(onError).call(exception);
     }
@@ -263,24 +256,21 @@ public abstract class AbstractFutureToObservableConverterTest<T extends Future<S
     private void doTestException(final RuntimeException exception) throws InterruptedException {
         T future = originalFutureTestHelper.createExceptionalFuture(exception);
 
-        Observable<String> observable = toObservable(future);
-        Action1<String> onNext = mockAction();
+        Single<String> single = toSingle(future);
+        Action1<String> onSuccess = mockAction();
         final Action1<Throwable> onError = mockAction();
-        Action0 onComplete = mock(Action0.class);
 
-        observable.subscribe(
-                onNext,
-                t -> {
-                    onError.call(t);
-                    latch.countDown();
-                },
-                onComplete
+        single.subscribe(
+            onSuccess,
+            t -> {
+                onError.call(t);
+                latch.countDown();
+            }
         );
         latch.await();
 
         //wait for the result
-        verifyZeroInteractions(onNext);
+        verifyZeroInteractions(onSuccess);
         verify(onError).call(any(CompletionException.class));
-        verifyZeroInteractions(onComplete);
     }
 }

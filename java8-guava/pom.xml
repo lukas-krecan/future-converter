@@ -22,9 +22,17 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
+            <groupId>net.javacrumbs.future-converter</groupId>
+            <artifactId>future-converter-java8-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>net.javacrumbs.future-converter</groupId>
+            <artifactId>future-converter-guava-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>net.javacrumbs.future-converter</groupId>
             <artifactId>future-converter-common-test</artifactId>

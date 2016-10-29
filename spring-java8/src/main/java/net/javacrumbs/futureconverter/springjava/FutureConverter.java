@@ -15,8 +15,9 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
+import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
+import net.javacrumbs.futureconverter.springcommon.SpringFutureUtils;
 import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -27,66 +28,15 @@ public class FutureConverter {
 
     /**
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link org.springframework.util.concurrent.ListenableFuture}.
-     *
-     * @param completableFuture
-     * @param <T>
-     * @return
      */
     public static <T> ListenableFuture<T> toListenableFuture(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof CompletableListenableFuture) {
-            return ((CompletableListenableFuture<T>) completableFuture).getListenableFuture();
-        } else {
-            return new ListenableCompletableFutureWrapper<>(completableFuture);
-        }
+        return SpringFutureUtils.createListenableFuture(Java8FutureUtils.createValueSourceFuture(completableFuture));
     }
 
     /**
      * Converts  {@link org.springframework.util.concurrent.ListenableFuture} to {@link java.util.concurrent.CompletableFuture}.
-     *
-     * @param listenableFuture
-     * @param <T>
-     * @return
      */
     public static <T> CompletableFuture<T> toCompletableFuture(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof ListenableCompletableFutureWrapper) {
-            return ((ListenableCompletableFutureWrapper<T>) listenableFuture).getWrappedFuture();
-        } else {
-            return buildCompletableFutureFromListenableFuture(listenableFuture);
-        }
-    }
-
-    private static <T> CompletableFuture<T> buildCompletableFutureFromListenableFuture(final ListenableFuture<T> listenableFuture) {
-        CompletableFuture<T> completable = new CompletableListenableFuture<T>(listenableFuture);
-        listenableFuture.addCallback(new ListenableFutureCallback<T>() {
-            @Override
-            public void onSuccess(T result) {
-                completable.complete(result);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                completable.completeExceptionally(t);
-            }
-        });
-        return completable;
-    }
-
-    private static final class CompletableListenableFuture<T> extends CompletableFuture<T> {
-        private final ListenableFuture<T> listenableFuture;
-
-        public CompletableListenableFuture(ListenableFuture<T> listenableFuture) {
-            this.listenableFuture = listenableFuture;
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            boolean result = listenableFuture.cancel(mayInterruptIfRunning);
-            super.cancel(mayInterruptIfRunning);
-            return result;
-        }
-
-        public ListenableFuture<T> getListenableFuture() {
-            return listenableFuture;
-        }
+        return Java8FutureUtils.createCompletableFuture(SpringFutureUtils.createValueSourceFuture(listenableFuture));
     }
 }

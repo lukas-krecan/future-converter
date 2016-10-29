@@ -15,7 +15,9 @@
  */
 package net.javacrumbs.futureconverter.java8rx;
 
-import rx.Observable;
+import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
+import rx.Single;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -27,33 +29,17 @@ public class FutureConverter {
     /**
      * Converts {@link rx.Observable} to {@link java.util.concurrent.CompletableFuture}. Takes
      * only the first value produced by observable.
-     *
-     * @param observable
-     * @param <T>
-     * @return
      */
-    public static <T> CompletableFuture<T> toCompletableFuture(Observable<T> observable) {
-        if (observable instanceof CompletableFutureObservable) {
-            return ((CompletableFutureObservable<T>) observable).getCompletableFuture();
-        } else {
-            return new ObservableCompletableFuture<>(observable);
-        }
+    public static <T> CompletableFuture<T> toCompletableFuture(Single<T> single) {
+        return Java8FutureUtils.createCompletableFuture(RxJavaFutureUtils.createValueSource(single));
     }
 
     /**
      * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Observable}.
      * The original future is NOT canceled upon unsubscribe.
-     *
-     * @param completableFuture
-     * @param <T>
-     * @return
      */
-    public static <T> Observable<T> toObservable(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof ObservableCompletableFuture) {
-            return ((ObservableCompletableFuture<T>) completableFuture).getObservable();
-        } else {
-            return new CompletableFutureObservable<>(completableFuture);
-        }
+    public static <T> Single<T> toSingle(CompletableFuture<T> completableFuture) {
+        return RxJavaFutureUtils.createSingle(Java8FutureUtils.createValueSource(completableFuture));
     }
 }
 
