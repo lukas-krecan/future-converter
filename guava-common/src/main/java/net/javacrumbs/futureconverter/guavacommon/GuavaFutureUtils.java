@@ -15,7 +15,6 @@
  */
 package net.javacrumbs.futureconverter.guavacommon;
 
-import com.google.common.util.concurrent.ExecutionList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -102,14 +101,12 @@ public class GuavaFutureUtils {
 
 
     /**
-     * if we have ValueSourceFuture, we can use it as the implementation and this class only takes track of subscriptions.
+     * If we have ValueSourceFuture, we can use it as the implementation and this class only converts
+     * listener registration.
      */
     private static class ValueSourceFutureBackedListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
-        private final ExecutionList executionList = new ExecutionList();
-
         ValueSourceFutureBackedListenableFuture(ValueSourceFuture<T> valueSourceFuture) {
             super(valueSourceFuture);
-            valueSourceFuture.addCallbacks(value -> executionList.execute(), ex -> executionList.execute());
         }
 
         @Override
@@ -119,7 +116,7 @@ public class GuavaFutureUtils {
 
         @Override
         public void addListener(Runnable listener, Executor executor) {
-            executionList.add(listener, executor);
+            getWrappedFuture().addCallbacks(value -> executor.execute(listener), ex -> executor.execute(listener));
         }
     }
 

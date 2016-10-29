@@ -16,7 +16,7 @@
 package net.javacrumbs.futureconverter.springjava;
 
 import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
-import net.javacrumbs.futureconverter.guavacommon.SpringFutureUtils;
+import net.javacrumbs.futureconverter.springcommon.SpringFutureUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.CompletableFuture;
