@@ -32,7 +32,7 @@ public class ToSingleConverterTest extends AbstractFutureToSingleConverterTest<C
     }
 
     @Override
-    protected CompletableFuture<String> toFuture(Single<String> observable) {
-        return FutureConverter.toCompletableFuture(observable);
+    protected CompletableFuture<String> toFuture(Single<String> single) {
+        return FutureConverter.toCompletableFuture(single);
     }
 }

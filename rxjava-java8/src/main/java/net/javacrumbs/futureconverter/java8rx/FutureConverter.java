@@ -22,21 +22,20 @@ import rx.Single;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Converts between Java 8 {@link java.util.concurrent.CompletableFuture} and RxJava {@link rx.Observable}
+ * Converts between Java 8 {@link java.util.concurrent.CompletableFuture} and RxJava {@link rx.Single}
  */
 public class FutureConverter {
 
     /**
-     * Converts {@link rx.Observable} to {@link java.util.concurrent.CompletableFuture}. Takes
-     * only the first value produced by observable.
+     * Converts {@link rx.Single} to {@link java.util.concurrent.CompletableFuture}.
      */
     public static <T> CompletableFuture<T> toCompletableFuture(Single<T> single) {
         return Java8FutureUtils.createCompletableFuture(RxJavaFutureUtils.createValueSource(single));
     }
 
     /**
-     * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Observable}.
-     * The original future is NOT canceled upon unsubscribe.
+     * Converts {@link java.util.concurrent.CompletableFuture} to {@link rx.Single}.
+     * The original future is canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(CompletableFuture<T> completableFuture) {
         return RxJavaFutureUtils.createSingle(Java8FutureUtils.createValueSource(completableFuture));

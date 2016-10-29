@@ -52,7 +52,7 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
 
     protected abstract Single<String> toSingle(T future);
 
-    protected abstract T toFuture(Single<String> observable);
+    protected abstract T toFuture(Single<String> single);
 
     @After
     public void cleanup() {

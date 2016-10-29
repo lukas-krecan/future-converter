@@ -15,20 +15,20 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
-import net.javacrumbs.futureconverter.common.test.rxjava.AbstractObservableToFutureConverterTest;
+import net.javacrumbs.futureconverter.common.test.rxjava.AbstractSingleToFutureConverterTest;
 import net.javacrumbs.futureconverter.common.test.spring.SpringConvertedFutureTestHelper;
 import org.springframework.util.concurrent.ListenableFuture;
 import rx.Single;
 
-public class ToListenableFutureConverterTest extends AbstractObservableToFutureConverterTest<ListenableFuture<String>> {
+public class ToListenableFutureConverterTest extends AbstractSingleToFutureConverterTest<ListenableFuture<String>> {
 
     public ToListenableFutureConverterTest() {
         super(new SpringConvertedFutureTestHelper());
     }
 
     @Override
-    protected ListenableFuture<String> toFuture(Single<String> observable) {
-        return FutureConverter.toListenableFuture(observable);
+    protected ListenableFuture<String> toFuture(Single<String> single) {
+        return FutureConverter.toListenableFuture(single);
     }
 
     @Override

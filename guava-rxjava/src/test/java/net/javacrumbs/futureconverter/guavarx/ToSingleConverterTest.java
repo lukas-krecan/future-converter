@@ -32,7 +32,7 @@ public class ToSingleConverterTest extends AbstractFutureToSingleConverterTest<L
     }
 
     @Override
-    protected ListenableFuture<String> toFuture(Single<String> observable) {
-        return FutureConverter.toListenableFuture(observable);
+    protected ListenableFuture<String> toFuture(Single<String> single) {
+        return FutureConverter.toListenableFuture(single);
     }
 }
