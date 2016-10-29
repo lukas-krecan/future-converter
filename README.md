@@ -1,17 +1,12 @@
 Future Converter [![Build Status](https://travis-ci.org/lukas-krecan/future-converter.png?branch=master)](https://travis-ci.org/lukas-krecan/future-converter) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.javacrumbs.future-converter/future-converter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.javacrumbs.future-converter/future-converter)
 ================
 
-Converts between various future types, [RxJava](https://github.com/Netflix/RxJava) Observables,
+Converts between various future types, [RxJava](https://github.com/Netflix/RxJava) Single,
 Spring 4 [ListenableFuture](http://docs.spring.io/spring/docs/4.0.0.BUILD-SNAPSHOT/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html),
 Java 8 [CompletableFuture](http://download.java.net/lambda/b88/docs/api/java/util/concurrent/CompletableFuture.html) and
 Guava [ListenableFuture](http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/com/google/common/util/concurrent/ListenableFuture.html).
 
-Please note that the conversion is not always straightforward. Especially RxObservables are completely different concept than
-Futures. Nevertheless, the conversion is more or less possible.
-
 I am aware of the following quirks:
-
-* Observable can produce multiple values. When converting to Future, we take the first value
 * It is not [possible to cancel CompletableFuture](http://stackoverflow.com/questions/23320407/how-to-cancel-java-8-completable-future) if it's blocked.
 
 The project has pretty good test coverage, but testing asynchronous stuff is tricky. If you find any bug, please let me know.
