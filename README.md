@@ -1,4 +1,4 @@
-Future Converter
+Future Converter [![Build Status](https://travis-ci.org/lukas-krecan/future-converter.png?branch=master)](https://travis-ci.org/lukas-krecan/future-converter) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.javacrumbs.future-converter/future-converter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.javacrumbs.future-converter/future-converter)
 ================
 
 Converts between various future types, [RxJava](https://github.com/Netflix/RxJava) Observables,
