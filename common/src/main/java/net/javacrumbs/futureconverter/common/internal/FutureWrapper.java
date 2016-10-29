@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.common;
+package net.javacrumbs.futureconverter.common.internal;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

@@ -15,35 +15,27 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
+import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
+import net.javacrumbs.futureconverter.springcommon.SpringFutureUtils;
 import org.springframework.util.concurrent.ListenableFuture;
-import rx.Observable;
 import rx.Single;
 
 public class FutureConverter {
 
     /**
-     * Converts {@link org.springframework.util.concurrent.ListenableFuture} to  {@link rx.Observable}.
-     * The original future is NOT canceled upon unsubscribe.* The original future is NOT canceled upon unsubscribe.
+     * Converts {@link ListenableFuture} to  {@link rx.Single}.
+     * The original future is NOT canceled upon unsubscribe.
      */
-    public static <T> Single<T> toObservable(ListenableFuture<T> listenableFuture) {
-        if (listenableFuture instanceof ObservableListenableFuture) {
-            return ((ObservableListenableFuture<T>) listenableFuture).getObservable();
-        } else {
-            return new ListenableFutureObservable<>(listenableFuture);
-        }
-
+    public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
+        return RxJavaFutureUtils.createSingle(SpringFutureUtils.createValueSource(listenableFuture));
     }
 
     /**
-     * Converts  {@link rx.Observable} to {@link org.springframework.util.concurrent.ListenableFuture}.
+     * Converts  {@link rx.Observable} to {@link ListenableFuture}.
      * Modifies the original Observable and takes only the first value.
      */
     public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
-        if (single instanceof ListenableFutureObservable) {
-            return ((ListenableFutureObservable<T>) single).getListenableFuture();
-        } else {
-            return new ObservableListenableFuture<>(single);
-        }
+        return SpringFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));
     }
 
 }

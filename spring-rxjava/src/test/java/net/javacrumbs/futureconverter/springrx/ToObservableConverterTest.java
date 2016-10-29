@@ -29,7 +29,7 @@ public class ToObservableConverterTest extends AbstractFutureToObservableConvert
 
     @Override
     protected Single<String> toSingle(ListenableFuture<String> future) {
-        return FutureConverter.toObservable(future);
+        return FutureConverter.toSingle(future);
     }
 
     @Override

@@ -33,6 +33,6 @@ public class ToListenableFutureConverterTest extends AbstractObservableToFutureC
 
     @Override
     protected Single<String> toSingle(ListenableFuture<String> future) {
-        return FutureConverter.toObservable(future);
+        return FutureConverter.toSingle(future);
     }
 }

@@ -15,88 +15,47 @@
  */
 package net.javacrumbs.futureconverter.guavacommon;
 
-import net.javacrumbs.futureconverter.common.internal.CommonCallback;
-import net.javacrumbs.futureconverter.common.internal.SettableFuture;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;
 
 import java.util.concurrent.CompletableFuture;
-
-import static java.util.Objects.requireNonNull;
+import java.util.function.Consumer;
 
 public class Java8FutureUtils {
+
     public static <T> CompletableFuture<T> createCompletableFuture(ValueSource<T> valueSource) {
-        if (valueSource instanceof ListenableCompletableFutureWrapper) {
-            return ((ListenableCompletableFutureWrapper<T>) valueSource).getWrappedFuture();
+        if (valueSource instanceof CompletableFuturebackedValueSource) {
+            return ((CompletableFuturebackedValueSource<T>) valueSource).getWrappedFuture();
         } else {
-            return new CompletableFutureListenableWrapper<T>(valueSource);
+            return new ValueSourcebackedCompletableFuture<T>(valueSource);
         }
     }
 
     public static <T> ValueSourceFuture<T> createValueSourceFuture(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof CompletableFutureListenableWrapper &&
-            ((CompletableFutureListenableWrapper<T>) completableFuture).getValueSource() instanceof ValueSourceFuture) {
-            return (ValueSourceFuture<T>) ((CompletableFutureListenableWrapper<T>) completableFuture).getValueSource();
+        if (completableFuture instanceof ValueSourcebackedCompletableFuture &&
+            ((ValueSourcebackedCompletableFuture<T>) completableFuture).getValueSource() instanceof ValueSourceFuture) {
+            return (ValueSourceFuture<T>) ((ValueSourcebackedCompletableFuture<T>) completableFuture).getValueSource();
         } else {
-            return new ListenableCompletableFutureWrapper<>(completableFuture);
+            return new CompletableFuturebackedValueSource<>(completableFuture);
         }
     }
 
     public static <T> ValueSource<T> createValueSource(CompletableFuture<T> completableFuture) {
-        if (completableFuture instanceof CompletableFutureListenableWrapper) {
-            return ((CompletableFutureListenableWrapper<T>) completableFuture).getValueSource();
+        if (completableFuture instanceof ValueSourcebackedCompletableFuture) {
+            return ((ValueSourcebackedCompletableFuture<T>) completableFuture).getValueSource();
         } else {
-            return new ListenableCompletableFutureWrapper<>(completableFuture);
+            return new CompletableFuturebackedValueSource<>(completableFuture);
         }
     }
 
-    public static <T> SettableFuture<T> createSettableFuture(Object origin) {
-        return new SettableCompletableFuture<>(origin);
-    }
-
-    private static final class SettableCompletableFuture<T> extends CompletableFuture<T> implements SettableFuture<T> {
-        private final Object origin;
-        private Runnable cancellationCallback;
-
-        public SettableCompletableFuture(Object origin) {
-            this.origin = origin;
-        }
-
-        @Override
-        public void setResult(T value) {
-            complete(value);
-        }
-
-        @Override
-        public void setException(Throwable exception) {
-            completeExceptionally(exception);
-        }
-
-        @Override
-        public void setCancellationCallback(Runnable callback) {
-            requireNonNull(callback);
-            if (cancellationCallback != null) {
-                throw new IllegalStateException("Cancellation callback can be set only once.");
-            }
-            ;
-            cancellationCallback = callback;
-        }
-
-        public Object getOrigin() {
-            return origin;
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            cancellationCallback.run();
-            return super.cancel(mayInterruptIfRunning);
-        }
-    }
-
-    private static final class CompletableFutureListenableWrapper<T> extends CompletableFuture<T> {
+    /**
+     * CompletableFuture that takes values from the ValueSource. CompletableFuture is a class, not
+     * an interface so we can not just forward events from the ValueSource, we to always instantiate the class.
+     */
+    private static final class ValueSourcebackedCompletableFuture<T> extends CompletableFuture<T> {
         private final ValueSource<T> valueSource;
 
-        public CompletableFutureListenableWrapper(ValueSource<T> valueSource) {
+        private ValueSourcebackedCompletableFuture(ValueSource<T> valueSource) {
             this.valueSource = valueSource;
             valueSource.addCallbacks(this::complete, this::completeExceptionally);
         }
@@ -111,24 +70,24 @@ public class Java8FutureUtils {
             return result;
         }
 
-        public ValueSource<T> getValueSource() {
+        private ValueSource<T> getValueSource() {
             return valueSource;
         }
     }
 
-    private static final class ListenableCompletableFutureWrapper<T> extends ValueSourceFuture<T> {
-        private ListenableCompletableFutureWrapper(CompletableFuture<T> completableFuture) {
+    private static final class CompletableFuturebackedValueSource<T> extends ValueSourceFuture<T> {
+        private CompletableFuturebackedValueSource(CompletableFuture<T> completableFuture) {
             super(completableFuture);
         }
 
 
         @Override
-        public void addCallbacks(CommonCallback<T> successCallback, CommonCallback<Throwable> failureCallback) {
+        public void addCallbacks(Consumer<T> successCallback, Consumer<Throwable> failureCallback) {
             getWrappedFuture().whenComplete((v, t) -> {
                 if (t == null) {
-                    successCallback.process(v);
+                    successCallback.accept(v);
                 } else {
-                    failureCallback.process(t);
+                    failureCallback.accept(t);
                 }
             });
         }

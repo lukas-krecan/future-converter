@@ -15,6 +15,8 @@
  */
 package net.javacrumbs.futureconverter.common.internal;
 
+import java.util.function.Consumer;
+
 /**
  * Source of values. Let's say we are converting from RxJava Single to CompletableFuture. In such case Single is
  * value source (the original object) and the library registers CompletableFuture (target object) to listen on Singles
@@ -25,7 +27,7 @@ public interface ValueSource<T> {
     /**
      * Used to notify target object about changes in the original object.
      */
-    void addCallbacks(CommonCallback<T> successCallback, CommonCallback<Throwable> failureCallback);
+    void addCallbacks(Consumer<T> successCallback, Consumer<Throwable> failureCallback);
 
     /**
      * Cancels execution of the original object if cancel is called on the target object
