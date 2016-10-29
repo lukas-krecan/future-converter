@@ -24,15 +24,14 @@ public class FutureConverter {
 
     /**
      * Converts {@link com.google.common.util.concurrent.ListenableFuture} to  {@link rx.Single}.
-     * The original future is NOT canceled upon unsubscribe.
+     * The original future is canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
         return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createValueSource(listenableFuture));
     }
 
     /**
-     * Converts  {@link rx.Observable} to {@link com.google.common.util.concurrent.ListenableFuture}.
-     * Modifies the original Observable and takes only the first value.
+     * Converts  {@link rx.Single} to {@link com.google.common.util.concurrent.ListenableFuture}.
      */
     public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
         return GuavaFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));

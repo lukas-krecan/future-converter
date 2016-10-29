@@ -24,12 +24,12 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 public class SpringConvertedFutureTestHelper extends CommonConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
-    public final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
+    private final ListenableFutureCallback<String> callback = mock(ListenableFutureCallback.class);
 
     @Override
     public void waitForCalculationToFinish(ListenableFuture<String> convertedFuture) throws InterruptedException {
@@ -70,15 +70,16 @@ public class SpringConvertedFutureTestHelper extends CommonConvertedFutureTestHe
 
     @Override
     public void addCallbackTo(ListenableFuture<String> convertedFuture) {
-        convertedFuture.addCallback(callback);
         convertedFuture.addCallback(new ListenableFutureCallback<String>() {
             @Override
             public void onSuccess(String result) {
+                callback.onSuccess(result);
                 callbackCalled();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                callback.onFailure(t);
                 callbackCalled();
             }
         });

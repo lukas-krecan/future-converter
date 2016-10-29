@@ -24,15 +24,14 @@ public class FutureConverter {
 
     /**
      * Converts {@link ListenableFuture} to  {@link rx.Single}.
-     * The original future is NOT canceled upon unsubscribe.
+     * The original future is canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
         return RxJavaFutureUtils.createSingle(SpringFutureUtils.createValueSource(listenableFuture));
     }
 
     /**
-     * Converts  {@link rx.Observable} to {@link ListenableFuture}.
-     * Modifies the original Observable and takes only the first value.
+     * Converts  {@link rx.Single} to {@link ListenableFuture}.
      */
     public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
         return SpringFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));

@@ -26,12 +26,12 @@ import net.javacrumbs.futureconverter.common.test.common.CommonConvertedFutureTe
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 public class GuavaConvertedFutureTestHelper extends CommonConvertedFutureTestHelper implements ConvertedFutureTestHelper<ListenableFuture<String>> {
-    public final FutureCallback<String> callback = mock(FutureCallback.class);
+    private final FutureCallback<String> callback = mock(FutureCallback.class);
 
     @Override
     public void waitForCalculationToFinish(com.google.common.util.concurrent.ListenableFuture<String> convertedFuture) throws InterruptedException {

@@ -2,6 +2,7 @@
 * Observables changed to rx.Single
 * Model refactored to make it extensible
 * Requires Java 8
+* RxJava unsubscribe does cancel the original Future
 
 ## 0.3.1
 * ObservableListenableFuture simplified

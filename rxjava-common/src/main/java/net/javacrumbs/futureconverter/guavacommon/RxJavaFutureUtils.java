@@ -18,6 +18,7 @@ package net.javacrumbs.futureconverter.guavacommon;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import rx.Single;
 import rx.Subscription;
+import rx.subscriptions.Subscriptions;
 
 import java.util.function.Consumer;
 
@@ -89,6 +90,7 @@ public class RxJavaFutureUtils {
                             subscriber.onError(throwable);
                         }
                     });
+                subscriber.add(Subscriptions.create(() -> valueSource.cancel(true)));
             };
         }
 
