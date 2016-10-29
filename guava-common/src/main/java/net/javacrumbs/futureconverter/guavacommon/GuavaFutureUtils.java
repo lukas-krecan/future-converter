@@ -66,7 +66,8 @@ public class GuavaFutureUtils {
     }
 
     /**
-     * If we only get ValueSource we have to create a ValueSourceFuture. //FXIME: remove
+     * If we only get ValueSource we have to create a ValueSourceFuture. Here we wrap Guavas SettableFuture
+     * and use it for listener handling and value storage.
      */
     private static class ValueSourceBackedListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
         private final ValueSource<T> valueSource;
@@ -100,6 +101,9 @@ public class GuavaFutureUtils {
     }
 
 
+    /**
+     * if we have ValueSourceFuture, we can use it as the implementation and this class only takes track of subscriptions.
+     */
     private static class ValueSourceFutureBackedListenableFuture<T> extends FutureWrapper<T> implements ListenableFuture<T> {
         private final ExecutionList executionList = new ExecutionList();
 
