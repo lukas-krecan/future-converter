@@ -16,9 +16,8 @@
 package net.javacrumbs.futureconverter.guavacommon;
 
 import net.javacrumbs.futureconverter.common.internal.CancellationCallback;
-import net.javacrumbs.futureconverter.common.internal.CommonCallback;
+import net.javacrumbs.futureconverter.common.internal.OriginSource;
 import net.javacrumbs.futureconverter.common.internal.ValueConsumer;
-import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import rx.Single;
 import rx.Subscription;
 
@@ -26,8 +25,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class RxJavaFutureUtils {
 
-    public static <T> SingleWrappingValueConsumer<T> createSingleWrappingValueConsumer() {
-        return new SingleWrappingValueConsumer<>();
+    public static <T> SingleWrappingValueConsumer<T> createSingleWrappingValueConsumer(Object origin) {
+        return new SingleWrappingValueConsumer<>(origin);
     }
 
     public static <T> CancellationCallback registerListeners(Single<T> single, ValueConsumer<T> valueConsumer) {
@@ -41,8 +40,8 @@ public class RxJavaFutureUtils {
         //FIXME: There has to be a better way
         private final CompletableFuture<T> valueHolder = new CompletableFuture<>();
 
-        private SingleWrappingValueConsumer() {
-            single = Single.create(
+        private SingleWrappingValueConsumer(Object origin) {
+            single = new OriginHoldingSingle<>(
                 singleSubscriber -> valueHolder.whenComplete(
                     (v, t) -> {
                         if (!singleSubscriber.isUnsubscribed()) {
@@ -57,7 +56,8 @@ public class RxJavaFutureUtils {
                             }
                         }
                     }
-                )
+                ),
+                origin
             );
         }
 
@@ -76,73 +76,17 @@ public class RxJavaFutureUtils {
         }
     }
 
+    private static class OriginHoldingSingle<T> extends Single<T> implements OriginSource {
+        private final Object origin;
 
-    public static <T> Single<T> createSingle(ValueSource<T> valueSource) {
-        if (valueSource instanceof SingleBackedValueSource) {
-            return ((SingleBackedValueSource<T>) valueSource).getSingle();
-        }
-        return new ValueSourceBackedSingle<>(valueSource);
-    }
-
-    public static <T> ValueSource<T> createValueSource(Single<T> single) {
-        if (single instanceof ValueSourceBackedSingle) {
-            return ((ValueSourceBackedSingle<T>) single).getValueSource();
-        } else {
-            return new SingleBackedValueSource<>(single);
-        }
-    }
-
-    private static class SingleBackedValueSource<T> implements ValueSource<T> {
-        private final Single<T> single;
-
-        private SingleBackedValueSource(Single<T> single) {
-            this.single = single;
+        private OriginHoldingSingle(OnSubscribe<T> f, Object origin) {
+            super(f);
+            this.origin = origin;
         }
 
         @Override
-        public void addCallbacks(CommonCallback<T> successCallback, CommonCallback<Throwable> failureCallback) {
-            single.subscribe(successCallback::process, failureCallback::process);
-        }
-
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            return false;
-        }
-
-        public Single<T> getSingle() {
-            return single;
-        }
-    }
-
-    private static class ValueSourceBackedSingle<T> extends Single<T> {
-        private final ValueSource<T> valueSource;
-
-        ValueSourceBackedSingle(ValueSource<T> valueSource) {
-            super(onSubscribe(valueSource));
-            this.valueSource = valueSource;
-        }
-
-        private static <T> OnSubscribe<T> onSubscribe(final ValueSource<T> valueSource) {
-            return subscriber -> {
-                valueSource.addCallbacks(value -> {
-                        if (!subscriber.isUnsubscribed()) {
-                            try {
-                                subscriber.onSuccess(value);
-                            } catch (Throwable e) {
-                                subscriber.onError(e);
-                            }
-                        }
-                    },
-                    throwable -> {
-                        if (!subscriber.isUnsubscribed()) {
-                            subscriber.onError(throwable);
-                        }
-                    });
-            };
-        }
-
-        private ValueSource<T> getValueSource() {
-            return valueSource;
+        public Object getOrigin() {
+            return origin;
         }
     }
 }

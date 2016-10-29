@@ -15,10 +15,14 @@
  */
 package net.javacrumbs.futureconverter.java8rx;
 
+import net.javacrumbs.futureconverter.common.internal.CancellationCallback;
+import net.javacrumbs.futureconverter.common.internal.OriginSource;
 import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils;
+import net.javacrumbs.futureconverter.guavacommon.Java8FutureUtils.CompletableFutureValueConsumer;
 import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
 import rx.Single;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -31,7 +35,12 @@ public class FutureConverter {
      * only the first value produced by observable.
      */
     public static <T> CompletableFuture<T> toCompletableFuture(Single<T> single) {
-        return Java8FutureUtils.createCompletableFuture(RxJavaFutureUtils.createValueSource(single));
+        Optional<CompletableFuture<T>> originalValue = (Optional<CompletableFuture<T>>) OriginSource.extractOriginalValue(single, CompletableFuture.class);
+        return originalValue.orElseGet(() -> {
+            CompletableFutureValueConsumer<T> completableFuture = Java8FutureUtils.createCompletableFuture(single);
+            CancellationCallback cancellationCallback = RxJavaFutureUtils.registerListeners(single, completableFuture);
+            return Java8FutureUtils.registerCancellationCallback(completableFuture, cancellationCallback);
+        });
     }
 
     /**
@@ -39,7 +48,12 @@ public class FutureConverter {
      * The original future is NOT canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(CompletableFuture<T> completableFuture) {
-        return RxJavaFutureUtils.createSingle(Java8FutureUtils.createValueSource(completableFuture));
+        Optional<Single<T>> originalValue = (Optional<Single<T>>) OriginSource.extractOriginalValue(completableFuture, Single.class);
+        return originalValue.orElseGet(() -> {
+            RxJavaFutureUtils.SingleWrappingValueConsumer<T> valueConsumer = RxJavaFutureUtils.createSingleWrappingValueConsumer(completableFuture);
+            Java8FutureUtils.registerListeners(completableFuture, valueConsumer);
+            return valueConsumer.getSingle();
+        });
     }
 }
 
