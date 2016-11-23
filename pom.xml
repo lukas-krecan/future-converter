@@ -29,15 +29,19 @@
         <module>common</module>
         <module>common-test</module>
         <module>java8-common</module>
-        <module>guava-common</module>
-        <module>rxjava-common</module>
-        <module>spring-common</module>
-        <module>spring-java8</module>
-        <module>rxjava-java8</module>
-        <module>spring-rxjava</module>
-        <module>guava-rxjava</module>
-        <module>spring-guava</module>
         <module>java8-guava</module>
+        <module>rxjava-java8</module>
+        <module>rxjava-common</module>
+        <module>rxjava2-common</module>
+        <module>rxjava2-java8</module>
+        <module>guava-common</module>
+        <module>guava-rxjava</module>
+        <module>guava-rxjava2</module>
+        <module>spring-common</module>
+        <module>spring-rxjava</module>
+        <module>spring-rxjava2</module>
+        <module>spring-guava</module>
+        <module>spring-java8</module>
     </modules>
 
     <dependencies>
@@ -60,9 +64,19 @@
                 <version>4.1.6.RELEASE</version>
             </dependency>
             <dependency>
+                <groupId>io.reactivex.rxjava2</groupId>
+                <artifactId>rxjava</artifactId>
+                <version>2.0.1</version>
+            </dependency>
+            <dependency>
+              <groupId>org.reactivestreams</groupId>
+              <artifactId>reactive-streams</artifactId>
+              <version>1.0.0</version>
+            </dependency>
+            <dependency>
                 <groupId>io.reactivex</groupId>
                 <artifactId>rxjava</artifactId>
-                <version>1.2.1</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
