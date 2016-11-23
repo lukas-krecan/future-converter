@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.guavacommon;
+package net.javacrumbs.futureconverter.java8common;
 
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
 import net.javacrumbs.futureconverter.common.internal.ValueSourceFuture;

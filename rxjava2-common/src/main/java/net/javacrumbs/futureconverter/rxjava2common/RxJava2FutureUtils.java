@@ -1,28 +1,28 @@
 /**
  * Copyright 2009-2016 the original author or authors.
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.guavacommon;
+package net.javacrumbs.futureconverter.rxjava2common;
 
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
+import io.reactivex.disposables.Disposable;
 import net.javacrumbs.futureconverter.common.internal.ValueSource;
-import rx.Single;
-import rx.Subscription;
-import rx.subscriptions.Subscriptions;
 
 import java.util.function.Consumer;
 
-public class RxJavaFutureUtils {
+public class RxJava2FutureUtils {
     public static <T> Single<T> createSingle(ValueSource<T> valueSource) {
         if (valueSource instanceof SingleBackedValueSource) {
             return ((SingleBackedValueSource<T>) valueSource).getSingle();
@@ -40,7 +40,7 @@ public class RxJavaFutureUtils {
 
     private static class SingleBackedValueSource<T> implements ValueSource<T> {
         private final Single<T> single;
-        private Subscription subscription;
+        private Disposable disposable;
 
         private SingleBackedValueSource(Single<T> single) {
             this.single = single;
@@ -48,8 +48,8 @@ public class RxJavaFutureUtils {
 
         @Override
         public void addCallbacks(Consumer<T> successCallback, Consumer<Throwable> failureCallback) {
-            if (subscription == null) {
-                subscription = single.subscribe(successCallback::accept, failureCallback::accept);
+            if (disposable == null) {
+                disposable = single.subscribe(successCallback::accept, failureCallback::accept);
             } else {
                 throw new IllegalStateException("add callbacks can be called only once");
             }
@@ -57,7 +57,7 @@ public class RxJavaFutureUtils {
 
         @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
-            subscription.unsubscribe();
+            disposable.dispose();
             return true;
         }
 
@@ -70,32 +70,46 @@ public class RxJavaFutureUtils {
         private final ValueSource<T> valueSource;
 
         ValueSourceBackedSingle(ValueSource<T> valueSource) {
-            super(onSubscribe(valueSource));
             this.valueSource = valueSource;
         }
 
-        private static <T> OnSubscribe<T> onSubscribe(final ValueSource<T> valueSource) {
-            return subscriber -> {
-                valueSource.addCallbacks(value -> {
-                        if (!subscriber.isUnsubscribed()) {
-                            try {
-                                subscriber.onSuccess(value);
-                            } catch (Throwable e) {
-                                subscriber.onError(e);
-                            }
-                        }
-                    },
-                    throwable -> {
-                        if (!subscriber.isUnsubscribed()) {
-                            subscriber.onError(throwable);
-                        }
-                    });
-                subscriber.add(Subscriptions.create(() -> valueSource.cancel(true)));
-            };
+        @Override
+        protected void subscribeActual(SingleObserver<? super T> observer) {
+            ValueSourceDisposable disposable = new ValueSourceDisposable();
+            valueSource.addCallbacks(
+                result -> {
+                    try {
+                        observer.onSuccess(result);
+                    } catch (Throwable e) {
+                        observer.onError(e);
+                    }
+                },
+                ex -> {
+                    if (!disposable.isDisposed()) {
+                        observer.onError(ex);
+                    }
+                }
+            );
+            observer.onSubscribe(disposable);
         }
 
         private ValueSource<T> getValueSource() {
             return valueSource;
+        }
+
+        private class ValueSourceDisposable implements Disposable {
+            private volatile boolean disposed = false;
+
+            @Override
+            public void dispose() {
+                disposed = true;
+                valueSource.cancel(true);
+            }
+
+            @Override
+            public boolean isDisposed() {
+                return disposed;
+            }
         }
     }
 }

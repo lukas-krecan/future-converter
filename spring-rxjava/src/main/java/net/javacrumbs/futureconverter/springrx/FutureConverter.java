@@ -15,7 +15,7 @@
  */
 package net.javacrumbs.futureconverter.springrx;
 
-import net.javacrumbs.futureconverter.guavacommon.RxJavaFutureUtils;
+import net.javacrumbs.futureconverter.rxjavacommon.RxJavaFutureUtils;
 import net.javacrumbs.futureconverter.springcommon.SpringFutureUtils;
 import org.springframework.util.concurrent.ListenableFuture;
 import rx.Single;

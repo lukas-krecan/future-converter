@@ -1,5 +1,5 @@
 /**
- * Copyright 2009-2015 the original author or authors.
+ * Copyright 2009-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.guavarx;
+package net.javacrumbs.futureconverter.springrx2;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import net.javacrumbs.futureconverter.guavacommon.GuavaFutureUtils;
-import net.javacrumbs.futureconverter.rxjavacommon.RxJavaFutureUtils;
-import rx.Single;
+import io.reactivex.Single;
+import net.javacrumbs.futureconverter.rxjava2common.RxJava2FutureUtils;
+import net.javacrumbs.futureconverter.springcommon.SpringFutureUtils;
+import org.springframework.util.concurrent.ListenableFuture;
 
 public class FutureConverter {
 
     /**
-     * Converts {@link com.google.common.util.concurrent.ListenableFuture} to  {@link rx.Single}.
+     * Converts {@link ListenableFuture} to  {@link io.reactivex.Single}.
      * The original future is canceled upon unsubscribe.
      */
     public static <T> Single<T> toSingle(ListenableFuture<T> listenableFuture) {
-        return RxJavaFutureUtils.createSingle(GuavaFutureUtils.createValueSource(listenableFuture));
+        return RxJava2FutureUtils.createSingle(SpringFutureUtils.createValueSource(listenableFuture));
     }
 
     /**
-     * Converts  {@link rx.Single} to {@link com.google.common.util.concurrent.ListenableFuture}.
+     * Converts  {@link io.reactivex.Single} to {@link ListenableFuture}.
      */
     public static <T> ListenableFuture<T> toListenableFuture(Single<T> single) {
-        return GuavaFutureUtils.createListenableFuture(RxJavaFutureUtils.createValueSource(single));
+        return SpringFutureUtils.createListenableFuture(RxJava2FutureUtils.createValueSource(single));
     }
+
 }
