@@ -7,7 +7,7 @@
     <parent>
         <groupId>net.javacrumbs.future-converter</groupId>
         <artifactId>future-converter</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.1.0</version>
     </parent>
 
     <properties>
