@@ -1,3 +1,6 @@
+## 1.1.0
+* Support for rxjava 2.0
+
 ## 1.0.0
 * Observables changed to rx.Single
 * Model refactored to make it extensible
