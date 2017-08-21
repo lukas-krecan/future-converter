@@ -104,11 +104,11 @@ ListenableFuture<String> guavaListenableFuture = toListenableFuture(completable)
 CompletableFuture<String> completable = toCompletableFuture(listenable);;
 ```
 
-##RxJava
+## RxJava
 Since version 1.1.0 we are using rx.Single for integration with RxJava
 
 Please note that
-* When converting a Future to a Single, we cancle the original future on unsubscribe. If tou need the feature to continue running, use something like `single.toObservable().publish().refCount().toSingle()`
+* When converting a Future to a Single, we cancel the original future on unsubscribe. If tou need the feature to continue running, use something like `single.toObservable().publish().refCount().toSingle()`
 * Converting Single to a Future registers exactly one subscription which is unsubscribed upon Future cancellation.
 
 ## rxjava-java8
