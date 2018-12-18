@@ -160,8 +160,6 @@
                     <header>header.txt</header>
                     <properties>
                         <year>2019</year>
-                        <owner>Lukas Krecan</owner>
-                        <email>lukas@krecan.net</email>
                     </properties>
                     <excludes>
                         <exclude>*.txt</exclude>
