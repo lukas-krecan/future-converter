@@ -6,5 +6,5 @@
 *.ipr
 *.iml
 *.iws
-target
-.idea
+target/
+.idea/
