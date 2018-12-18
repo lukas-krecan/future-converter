@@ -19,7 +19,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-FROM-TO</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 where you replace FROM and TO by library you want to use. For example `future-converter-spring-guava`. 
@@ -34,7 +34,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-spring-java8</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-spring-guava</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -88,7 +88,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-java8-guava</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 
 ```
@@ -120,7 +120,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-rxjava-java8</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -144,7 +144,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-spring-rxjava</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -168,7 +168,7 @@ Import the dependency
 <dependency>
     <groupId>net.javacrumbs.future-converter</groupId>
     <artifactId>future-converter-guava-rxjava</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
@@ -182,3 +182,7 @@ ListenableFuture<String> listenable = toListenableFuture(single);
 ...
 Single<String> single = toSingle(listenable);
 ```
+
+
+# Release notes
+* 1.1.1 - Automatic-Module-Names added
