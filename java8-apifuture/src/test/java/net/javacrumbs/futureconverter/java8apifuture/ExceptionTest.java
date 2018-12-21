@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.javacrumbs.futureconverter.java8guava;
+package net.javacrumbs.futureconverter.java8apifuture;
 
-import com.google.common.util.concurrent.Futures;
+import com.google.api.core.ApiFutures;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,36 +33,36 @@ public class ExceptionTest {
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test
-    public void testFinishedRuntimeExceptionStageToListenable() throws ExecutionException, InterruptedException {
+    public void testFinishedRuntimeExceptionStageToApi() throws ExecutionException, InterruptedException {
         IllegalStateException inputException = new IllegalStateException("something went wrong");
         CompletableFuture<String> future = new CompletableFuture<>();
         future.completeExceptionally(inputException);
 
         expectedException.expect(ExecutionException.class);
         expectedException.expectCause(is(inputException));
-        FutureConverter.toListenableFuture(future)
+        FutureConverter.toApiFuture(future)
                 .get();
     }
 
     @Test
-    public void testFinishedCheckedExceptionStageToListenable() throws ExecutionException, InterruptedException {
+    public void testFinishedCheckedExceptionStageToApi() throws ExecutionException, InterruptedException {
         Exception inputException = new Exception("something went wrong");
         CompletableFuture<String> future = new CompletableFuture<>();
         future.completeExceptionally(inputException);
 
         expectedException.expect(ExecutionException.class);
         expectedException.expectCause(is(inputException));
-        FutureConverter.toListenableFuture(future)
+        FutureConverter.toApiFuture(future)
                 .get();
     }
 
     @Test
-    public void testApplyRuntimeExceptionStageToListenable() throws ExecutionException, InterruptedException {
+    public void testApplyRuntimeExceptionStageToApi() throws ExecutionException, InterruptedException {
         IllegalStateException inputException = new IllegalStateException("something went wrong");
         expectedException.expect(ExecutionException.class);
         expectedException.expectCause(is(inputException));
 
-        FutureConverter.toListenableFuture(
+        FutureConverter.toApiFuture(
                 CompletableFuture.completedFuture("")
                         .thenApply(s -> {
                             throw inputException;
@@ -71,12 +71,12 @@ public class ExceptionTest {
     }
 
     @Test
-    public void testApplyCheckedExceptionStageToListenable() throws ExecutionException, InterruptedException {
+    public void testApplyCheckedExceptionStageToApi() throws ExecutionException, InterruptedException {
         Exception inputException = new Exception("something went wrong");
         expectedException.expect(ExecutionException.class);
         expectedException.expectCause(is(inputException));
 
-        FutureConverter.toListenableFuture(
+        FutureConverter.toApiFuture(
                 CompletableFuture.completedFuture("")
                         .thenCompose(s -> {
                             CompletableFuture<String> composed = new CompletableFuture<>();
@@ -87,36 +87,36 @@ public class ExceptionTest {
     }
 
     @Test
-    public void testFinishedRuntimeExceptionListenableToStage() {
+    public void testFinishedRuntimeExceptionApiToStage() {
         IllegalStateException inputException = new IllegalStateException("something went wrong");
         expectedException.expect(CompletionException.class);
         expectedException.expectCause(is(inputException));
 
         FutureConverter.toCompletableFuture(
-                Futures.immediateFailedFuture(inputException))
+                ApiFutures.immediateFailedFuture(inputException))
                 .join();
     }
 
     @Test
-    public void testFinishedCheckedExceptionListenableToStage() {
+    public void testFinishedCheckedExceptionApiToStage() {
         Exception inputException = new Exception("something went wrong");
         expectedException.expect(CompletionException.class);
         expectedException.expectCause(is(inputException));
 
         FutureConverter.toCompletableFuture(
-                Futures.immediateFailedFuture(inputException))
+                ApiFutures.immediateFailedFuture(inputException))
                 .join();
     }
 
     @Test
-    public void testApplyRuntimeExceptionListenableToStage() {
+    public void testApplyRuntimeExceptionApiToStage() {
         IllegalStateException inputException = new IllegalStateException("something went wrong");
         expectedException.expect(CompletionException.class);
         expectedException.expectCause(is(inputException));
 
         FutureConverter.toCompletableFuture(
-                Futures.transform(
-                        Futures.immediateFuture(""),
+                ApiFutures.transform(
+                        ApiFutures.immediateFuture(""),
                         s -> {
                             throw inputException;
                         },
@@ -125,16 +125,17 @@ public class ExceptionTest {
     }
 
     @Test
-    public void testApplyCheckedExceptionListenableToStage() {
+    public void testApplyCheckedExceptionApiToStage() {
         Exception inputException = new Exception("something went wrong");
         expectedException.expect(CompletionException.class);
         expectedException.expectCause(is(inputException));
 
         FutureConverter.toCompletableFuture(
-                Futures.transformAsync(
-                        Futures.immediateFuture(""),
-                        s -> Futures.immediateFailedFuture(inputException),
+                ApiFutures.transformAsync(
+                        ApiFutures.immediateFuture(""),
+                        s -> ApiFutures.immediateFailedFuture(inputException),
                         MoreExecutors.directExecutor()))
                 .join();
     }
+
 }

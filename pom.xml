@@ -31,6 +31,8 @@
         <module>common-test</module>
         <module>java8-common</module>
         <module>java8-guava</module>
+        <module>java8-apifuture</module>
+        <module>apifuture-common</module>
         <module>rxjava-java8</module>
         <module>rxjava-common</module>
         <module>rxjava2-common</module>
@@ -82,7 +84,12 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>18.0</version>
+                <version>20.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>api-common</artifactId>
+                <version>1.7.0</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
