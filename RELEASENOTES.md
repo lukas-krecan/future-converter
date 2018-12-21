@@ -1,3 +1,9 @@
+## 1.2.0
+* ApiFuture - Java 8 conversion support (thanks to TheIndifferent)
+
+## 1.1.1 
+* Automatic-Module-Names added
+
 ## 1.1.0
 * Support for rxjava 2.0
 
