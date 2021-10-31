@@ -15,11 +15,10 @@
  */
 package net.javacrumbs.futureconverter.java8guava;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import jdk.nashorn.internal.ir.annotations.Ignore;
-import net.javacrumbs.futureconverter.common.test.AbstractConverterHelperBasedTest;
+import com.google.common.util.concurrent.ListenableFuture;import net.javacrumbs.futureconverter.common.test.AbstractConverterHelperBasedTest;
 import net.javacrumbs.futureconverter.common.test.guava.GuavaConvertedFutureTestHelper;
 import net.javacrumbs.futureconverter.common.test.java8.Java8OriginalFutureTestHelper;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;

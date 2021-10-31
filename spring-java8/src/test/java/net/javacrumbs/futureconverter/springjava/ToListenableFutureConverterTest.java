@@ -15,10 +15,10 @@
  */
 package net.javacrumbs.futureconverter.springjava;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.javacrumbs.futureconverter.common.test.AbstractConverterHelperBasedTest;
 import net.javacrumbs.futureconverter.common.test.java8.Java8OriginalFutureTestHelper;
 import net.javacrumbs.futureconverter.common.test.spring.SpringConvertedFutureTestHelper;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.util.concurrent.ListenableFuture;
 
