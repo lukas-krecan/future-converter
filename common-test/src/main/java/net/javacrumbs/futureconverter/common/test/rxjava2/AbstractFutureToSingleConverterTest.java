@@ -35,7 +35,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 public abstract class AbstractFutureToSingleConverterTest<T extends Future<String>> {
 
@@ -76,7 +76,7 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
         latch.await();
 
         verify(onSuccess).accept(VALUE);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onError);
 
         assertSame(completable, toFuture(single));
     }
@@ -94,15 +94,15 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
                 latch.countDown();
             },
             onError);
-        verifyZeroInteractions(onSuccess);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onSuccess);
+        verifyNoInteractions(onError);
 
         originalFutureTestHelper.finishRunningFuture();
         latch.await();
 
         //wait for the result
         verify(onSuccess).accept(VALUE);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onError);
     }
 
     @Test
@@ -121,8 +121,8 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
                 latch.countDown();
             },
             onError1);
-        verifyZeroInteractions(onSuccess1);
-        verifyZeroInteractions(onError1);
+        verifyNoInteractions(onSuccess1);
+        verifyNoInteractions(onError1);
 
         // second subscription
         Consumer<String> onSuccess2 = mockAction();
@@ -134,8 +134,8 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
                 latch.countDown();
             },
             onError2);
-        verifyZeroInteractions(onSuccess2);
-        verifyZeroInteractions(onError2);
+        verifyNoInteractions(onSuccess2);
+        verifyNoInteractions(onError2);
 
 
         originalFutureTestHelper.finishRunningFuture();
@@ -144,10 +144,10 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
         latch.await();
 
         verify(onSuccess1).accept(VALUE);
-        verifyZeroInteractions(onError1);
+        verifyNoInteractions(onError1);
 
         verify(onSuccess2).accept(VALUE);
-        verifyZeroInteractions(onError2);
+        verifyNoInteractions(onError2);
     }
 
     @Test
@@ -158,16 +158,16 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
         Consumer<String> onSuccess = mockAction();
         Consumer<Throwable> onError = mockAction();
 
-        verifyZeroInteractions(onSuccess);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onSuccess);
+        verifyNoInteractions(onError);
 
         single.subscribe(v -> {}).dispose();
 
         assertTrue(future.isCancelled());
 
         //wait for the result
-        verifyZeroInteractions(onSuccess);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onSuccess);
+        verifyNoInteractions(onError);
     }
 
     @Test
@@ -182,8 +182,8 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
             onSuccess.accept(v);
             latch.countDown();
         }, onError);
-        verifyZeroInteractions(onSuccess);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onSuccess);
+        verifyNoInteractions(onError);
 
         single.subscribe(v -> {}).dispose();
 
@@ -192,7 +192,7 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
 
         //wait for the result
         verify(onSuccess).accept(VALUE);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onError);
     }
 
     @Test
@@ -215,7 +215,7 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
         latch.await();
 
         verify(onError).accept(any(Throwable.class));
-        verifyZeroInteractions(onNext);
+        verifyNoInteractions(onNext);
     }
 
     @SuppressWarnings("unchecked")
@@ -243,8 +243,8 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
         originalFutureTestHelper.finishRunningFuture();
         Thread.sleep(10); //do not know how to wait for something to not happen
 
-        verifyZeroInteractions(onSuccess);
-        verifyZeroInteractions(onError);
+        verifyNoInteractions(onSuccess);
+        verifyNoInteractions(onError);
     }
 
     @Test
@@ -286,7 +286,7 @@ public abstract class AbstractFutureToSingleConverterTest<T extends Future<Strin
         latch.await();
 
         //wait for the result
-        verifyZeroInteractions(onSuccess);
+        verifyNoInteractions(onSuccess);
         verify(onError).accept(exception);
     }
 }
