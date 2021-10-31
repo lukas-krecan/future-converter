@@ -135,7 +135,7 @@
                         <configuration>
                             <keyname>572516F4</keyname>
                         </configuration>
-                        <version>1.0</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
