@@ -72,7 +72,7 @@ public class GuavaConvertedFutureTestHelper extends CommonConvertedFutureTestHel
 
     @Override
     public void addCallbackTo(ListenableFuture<String> convertedFuture) {
-        Futures.addCallback(convertedFuture, callback);
+        Futures.addCallback(convertedFuture, callback, MoreExecutors.directExecutor());
         convertedFuture.addListener(this::callbackCalled, MoreExecutors.directExecutor());
     }
 }
