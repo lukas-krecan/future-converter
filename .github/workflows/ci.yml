@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        java: [ '8', '17' ]
+        java: [ '8', '17', '18' ]
         os: [ 'ubuntu-latest']
     runs-on: ${{ matrix.os }}
     steps:
